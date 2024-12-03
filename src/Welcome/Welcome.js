@@ -56,7 +56,9 @@ function Welcome() {
         <>
           <div className="logo-container">
             <img src="/fnb back.png" alt="FNB Logo" className="logo" />
-            <h2 className="logo-text">FNB (First National Bank)</h2>
+            <h2 className="logo-text">FNB</h2>
+            <h2 className="logo-text">(First National Bank)</h2>
+
           </div>
 
           <div className="welcome-header">
@@ -161,6 +163,13 @@ function Welcome() {
             align-items: center;
             height: 100vh;
             margin: 0;
+          }
+            christmas-video {
+            width: 100%;
+            max-width: 400px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
           }
 
           .welcome-container {
