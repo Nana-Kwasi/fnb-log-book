@@ -1,4 +1,4 @@
- import React, { useState } from 'react';
+import React, { useState } from 'react';
 import {
   getFirestore,
   collection,
@@ -19,54 +19,52 @@ const BeenHereBefore = () => {
   const [visitHistory, setVisitHistory] = useState([]);
   const [error, setError] = useState('');
   const [currentVisitId, setCurrentVisitId] = useState(null);
-  const [timeOut, setTimeOut] = useState(''); // Time out value for manual input
+  const [timeOut, setTimeOut] = useState('');
 
   const db = getFirestore(app);
 
   const handleLogin = async () => {
- if (!phoneNumber.match(/^\+?\d{6,15}$/)) {
-  setError('Please enter a valid phone number with 6 to 15 digits. Include the country code if applicable.');
-  return;
-}
-
-
-  setError('');
-  setLoading(true);
-
-  try {
-    const q = query(
-      collection(db, 'VisitorEntries'),
-      where('telephone', '==', phoneNumber)
-    );
-    const querySnapshot = await getDocs(q);
-
-    if (querySnapshot.empty) {
-      setError('Phone number not found. Please check your input or register as a new visitor.');
-      setLoading(false);
+    if (!phoneNumber.match(/^\+?\d{6,15}$/)) {
+      setError('Please enter a valid phone number with 6 to 15 digits. Include the country code if applicable.');
       return;
     }
 
-    const userDoc = querySnapshot.docs[0].data();
-    const visits = querySnapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+    setError('');
+    setLoading(true);
 
-    setUserInfo(userDoc);
-    setVisitData({
-      telephone: userDoc.telephone || '',
-      company: userDoc.company || '',
-      department: userDoc.department || '',
-      purpose: userDoc.purpose || '',
-      reason: userDoc.reason || '',
-    });
-    setVisitHistory(visits);
-  } catch (err) {
-    setError('Error fetching user information. Please try again.');
-  }
-  setLoading(false);
-};
+    try {
+      const q = query(
+        collection(db, 'VisitorEntries'),
+        where('telephone', '==', phoneNumber)
+      );
+      const querySnapshot = await getDocs(q);
 
+      if (querySnapshot.empty) {
+        setError('Phone number not found. Please check your input or register as a new visitor.');
+        setLoading(false);
+        return;
+      }
+
+      const userDoc = querySnapshot.docs[0].data();
+      const visits = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+
+      setUserInfo(userDoc);
+      setVisitData({
+        telephone: userDoc.telephone || '',
+        company: userDoc.company || '',
+        department: userDoc.department || '',
+        purpose: userDoc.purpose || '',
+        reason: userDoc.reason || '',
+      });
+      setVisitHistory(visits);
+    } catch (err) {
+      setError('Error fetching user information. Please try again.');
+    }
+    setLoading(false);
+  };
 
   const handleCheckIn = async () => {
     setError('');
@@ -81,14 +79,22 @@ const BeenHereBefore = () => {
         department: visitData.department || '',
         purpose: visitData.purpose || '',
         reason: visitData.reason || '',
-        date: now.toISOString().split('T')[0], // Standardized date in YYYY-MM-DD format
-        timeIn: now.toTimeString().split(' ')[0], // Time in HH:MM:SS
+        date: new Date().toISOString().split('T')[0], // Explicitly use current date
+        timeIn: now.toTimeString().split(' ')[0], // Current time
         timeOut: '',
       };
   
       const docRef = await addDoc(collection(db, 'VisitorEntries'), newVisit);
   
-      setVisitHistory([newVisit, ...visitHistory]);
+      // Create a new visit object with the Firestore document ID
+      const visitWithId = { 
+        ...newVisit, 
+        id: docRef.id,
+        date: new Date().toISOString().split('T')[0] // Ensure date is current
+      };
+      
+      // Prepend the new visit to the history
+      setVisitHistory([visitWithId, ...visitHistory]);
       setCurrentVisitId(docRef.id);
       setError('Check-in successful!');
     } catch (err) {
@@ -96,7 +102,6 @@ const BeenHereBefore = () => {
     }
     setLoading(false);
   };
-  
 
   const handleTimeOut = async () => {
     if (!timeOut) {
@@ -133,9 +138,10 @@ const BeenHereBefore = () => {
     setVisitData((prevData) => ({ ...prevData, [name]: value }));
   };
 
-  
-  const formatDate = (isoDate) => {
-    const date = new Date(isoDate);
+  const formatDate = (dateString) => {
+    // If the date is already in YYYY-MM-DD format, parse it directly
+    const parts = dateString.split('-');
+    const date = new Date(parts[0], parts[1] - 1, parts[2]);
     return new Intl.DateTimeFormat('en-GB', { dateStyle: 'long' }).format(date);
   };
 
@@ -255,6 +261,8 @@ const BeenHereBefore = () => {
           </table>
         </div>
       )}
+ 
+
 
   <style>
   {`
