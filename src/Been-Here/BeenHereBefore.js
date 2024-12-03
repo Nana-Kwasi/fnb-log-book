@@ -65,8 +65,9 @@ const BeenHereBefore = () => {
   const handleCheckIn = async () => {
     setError('');
     setLoading(true);
-
+  
     try {
+      const now = new Date();
       const newVisit = {
         name: visitData.name || userInfo.name || '',
         telephone: visitData.telephone || userInfo.telephone || '',
@@ -74,13 +75,13 @@ const BeenHereBefore = () => {
         department: visitData.department || '',
         purpose: visitData.purpose || '',
         reason: visitData.reason || '',
-        date: new Date().toLocaleDateString(),
-        timeIn: new Date().toLocaleTimeString(),
+        date: now.toISOString().split('T')[0], // Standardized date in YYYY-MM-DD format
+        timeIn: now.toTimeString().split(' ')[0], // Time in HH:MM:SS
         timeOut: '',
       };
-
+  
       const docRef = await addDoc(collection(db, 'VisitorEntries'), newVisit);
-
+  
       setVisitHistory([newVisit, ...visitHistory]);
       setCurrentVisitId(docRef.id);
       setError('Check-in successful!');
@@ -89,6 +90,7 @@ const BeenHereBefore = () => {
     }
     setLoading(false);
   };
+  
 
   const handleTimeOut = async () => {
     if (!timeOut) {
@@ -123,6 +125,12 @@ const BeenHereBefore = () => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setVisitData((prevData) => ({ ...prevData, [name]: value }));
+  };
+
+  
+  const formatDate = (isoDate) => {
+    const date = new Date(isoDate);
+    return new Intl.DateTimeFormat('en-GB', { dateStyle: 'long' }).format(date);
   };
 
   return (
@@ -228,7 +236,7 @@ const BeenHereBefore = () => {
             <tbody>
               {visitHistory.map((visit, index) => (
                 <tr key={index}>
-                  <td>{visit.date}</td>
+                  <td>{formatDate(visit.date)}</td>
                   <td>{visit.timeIn}</td>
                   <td>{visit.timeOut || '---'}</td>
                   <td>{visit.company}</td>

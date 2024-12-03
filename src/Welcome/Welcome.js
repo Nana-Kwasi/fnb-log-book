@@ -60,13 +60,13 @@ function Welcome() {
           </div>
 
           <div className="welcome-header">
-            <h1 className="welcome-title">Welcome to First National Bank Visitor Log Book</h1>
+            <h1 className="welcome-title">Welcome to First National Bank Visitors Log Book</h1>
             <p className="welcome-description">
               Please select one of the options below to proceed:
             </p>
             <div className="button-container">
               <button onClick={() => navigate('/first-time')} className="button first-time-btn">
-                First Time
+                First Time?
               </button>
               <button onClick={() => navigate('/been-here-before')} className="button been-here-btn">
                 Been Here Before?

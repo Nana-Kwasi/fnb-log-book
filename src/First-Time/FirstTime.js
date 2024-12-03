@@ -388,93 +388,96 @@ function FirstTime() {
     e.preventDefault();
 
     if (!formData.picture) {
-      setError('Please take a picture before submitting.');
-      return;
+        setError('Please take a picture before submitting.');
+        return;
     }
 
     setIsLoading(true);
 
     try {
-      // Check if the telephone number has been registered before
-      const querySnapshot = await getDocs(query(collection(db, "VisitorEntries"), where("telephone", "==", formData.telephone)));
+        // Check if the telephone number has been registered before
+        const querySnapshot = await getDocs(query(collection(db, "VisitorEntries"), where("telephone", "==", formData.telephone)));
 
-      if (!querySnapshot.empty) {
-        setError('This Phone number has been used to check in before. Please click "Been Here Before" on the home page to log in with your number.');
-        setIsLoading(false);
-        return;
-      }
+        if (!querySnapshot.empty) {
+            setError('This Phone number has been used to check in before. Please click "Been Here Before" on the home page to log in with your number.');
+            setIsLoading(false);
+            return;
+        }
 
-      // Proceed with form submission if number is new
-      const entryId = uuidv4();
-      const now = new Date();
-      const formattedDate = now.toLocaleDateString();
-      const formattedTime = now.toLocaleTimeString();
+        // Proceed with form submission if number is new
+        const entryId = uuidv4();
+        const now = new Date();
+        const formattedDate = now.toISOString().split('T')[0]; // YYYY-MM-DD
+        const formattedTime = now.toTimeString().split(' ')[0]; // HH:mm:ss
 
-      const submissionData = {
-        name: formData.name,
-        reason: formData.reason,
-        department: formData.department,
-        purpose: formData.purpose,
-        telephone: formData.telephone,
-        company: formData.company,
-        date: formattedDate,
-        timeIn: formattedTime,
-        id: entryId,
-      };
+        const submissionData = {
+            name: formData.name,
+            reason: formData.reason,
+            department: formData.department,
+            purpose: formData.purpose,
+            telephone: formData.telephone,
+            company: formData.company,
+            date: formattedDate,
+            timeIn: formattedTime,
+            id: entryId,
+        };
 
-      await setDoc(doc(db, "VisitorEntries", entryId), submissionData);
-      alert('Form submitted successfully!');
-      setFormData({ ...formData, id: entryId });
-      setShowTimeoutForm(true);
+        await setDoc(doc(db, "VisitorEntries", entryId), submissionData);
+        alert('Form submitted successfully!');
+        setFormData({ ...formData, id: entryId });
+        setShowTimeoutForm(true);
 
-      localStorage.setItem('showTimeoutForm', 'true');
-      localStorage.setItem('formData', JSON.stringify({ ...formData, id: entryId }));
+        localStorage.setItem('showTimeoutForm', 'true');
+        localStorage.setItem('formData', JSON.stringify({ ...formData, id: entryId }));
     } catch (error) {
-      console.error("Error submitting data to Firestore:", error);
-      setError('Failed to submit the form. Please try again later.');
+        console.error("Error submitting data to Firestore:", error);
+        setError('Failed to submit the form. Please try again later.');
     }
 
     setIsLoading(false);
-  };
+};
 
-  const handleTimeoutSubmit = async () => {
-    if (!formData.timeOut) {
+const handleTimeoutSubmit = async () => {
+  if (!formData.timeOut) {
       alert('Please enter the time out before submitting.');
       return;
-    }
+  }
 
-    setIsLoading(true);
+  setIsLoading(true);
 
-    try {
+  try {
+      const now = new Date();
+      const formattedTimeOut = formData.timeOut || now.toTimeString().split(' ')[0]; // Default to current time if not provided
+
       await setDoc(
-        doc(db, "VisitorEntries", formData.id),
-        { timeOut: formData.timeOut },
-        { merge: true }
+          doc(db, "VisitorEntries", formData.id),
+          { timeOut: formattedTimeOut },
+          { merge: true }
       );
 
       alert('Timeout recorded successfully! Thank you for visiting us.');
       setShowTimeoutForm(false);
       setFormData({
-        name: '',
-        reason: '',
-        department: '',
-        purpose: '',
-        telephone: '',
-        company: '',
-        timeOut: '',
-        picture: null,
-        id: '',
+          name: '',
+          reason: '',
+          department: '',
+          purpose: '',
+          telephone: '',
+          company: '',
+          timeOut: '',
+          picture: null,
+          id: '',
       });
 
       localStorage.removeItem('showTimeoutForm');
       localStorage.removeItem('formData');
-    } catch (error) {
+  } catch (error) {
       console.error("Error submitting timeout to Firestore:", error);
       alert('An error occurred while recording timeout.');
-    } finally {
+  } finally {
       setIsLoading(false);
-    }
-  };
+  }
+};
 
   return (
     <div style={{ backgroundColor: '#0F384A' }}>
