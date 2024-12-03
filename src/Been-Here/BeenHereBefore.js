@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+ import React, { useState } from 'react';
 import {
   getFirestore,
   collection,
@@ -24,43 +24,49 @@ const BeenHereBefore = () => {
   const db = getFirestore(app);
 
   const handleLogin = async () => {
-    if (!phoneNumber.match(/^\d+$/)) {
-      setError('Please enter a valid phone number.');
+ if (!phoneNumber.match(/^\+?\d{6,15}$/)) {
+  setError('Please enter a valid phone number with 6 to 15 digits. Include the country code if applicable.');
+  return;
+}
+
+
+  setError('');
+  setLoading(true);
+
+  try {
+    const q = query(
+      collection(db, 'VisitorEntries'),
+      where('telephone', '==', phoneNumber)
+    );
+    const querySnapshot = await getDocs(q);
+
+    if (querySnapshot.empty) {
+      setError('Phone number not found. Please check your input or register as a new visitor.');
+      setLoading(false);
       return;
     }
 
-    setError('');
-    setLoading(true);
+    const userDoc = querySnapshot.docs[0].data();
+    const visits = querySnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
 
-    try {
-      const q = query(
-        collection(db, 'VisitorEntries'),
-        where('telephone', '==', phoneNumber)
-      );
-      const querySnapshot = await getDocs(q);
+    setUserInfo(userDoc);
+    setVisitData({
+      telephone: userDoc.telephone || '',
+      company: userDoc.company || '',
+      department: userDoc.department || '',
+      purpose: userDoc.purpose || '',
+      reason: userDoc.reason || '',
+    });
+    setVisitHistory(visits);
+  } catch (err) {
+    setError('Error fetching user information. Please try again.');
+  }
+  setLoading(false);
+};
 
-      if (!querySnapshot.empty) {
-        const userDoc = querySnapshot.docs[0].data();
-        const visits = querySnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-
-        setUserInfo(userDoc);
-        setVisitData({
-          telephone: userDoc.telephone || '',
-          company: userDoc.company || '',
-          department: userDoc.department || '',
-          purpose: userDoc.purpose || '',
-          reason: userDoc.reason || '',
-        });
-        setVisitHistory(visits);
-      }
-    } catch (err) {
-      setError('Error fetching user information. Please try again.');
-    }
-    setLoading(false);
-  };
 
   const handleCheckIn = async () => {
     setError('');
