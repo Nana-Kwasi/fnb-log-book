@@ -322,7 +322,7 @@
 
 
 import React, { useState, useEffect } from 'react';
-import { getFirestore, doc, setDoc, collection, getDocs, query, where } from "firebase/firestore";
+import { getFirestore, doc, setDoc, collection, getDocs, query, where, getDoc } from "firebase/firestore";
 import app from '../Config';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -344,6 +344,11 @@ function FirstTime() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showTimeoutForm, setShowTimeoutForm] = useState(false);
+  const [lastFourDigits, setLastFourDigits] = useState('');
+  const [timeRemaining, setTimeRemaining] = useState(120); // 2 minutes
+  const [showCodeInput, setShowCodeInput] = useState(false);
+  const [codeInput, setCodeInput] = useState('');
+  const [verifiedUser, setVerifiedUser] = useState(null);
 
   useEffect(() => {
     const savedState = localStorage.getItem('showTimeoutForm');
@@ -351,13 +356,33 @@ function FirstTime() {
 
     if (savedState === 'true' && savedFormData) {
       try {
-        setFormData(JSON.parse(savedFormData));
+        const parsedData = JSON.parse(savedFormData);
+        setFormData(parsedData);
+        setLastFourDigits(parsedData.id.slice(-4));
         setShowTimeoutForm(true);
       } catch {
         console.error('Error parsing formData from localStorage');
       }
     }
   }, []);
+
+  useEffect(() => {
+    let timer;
+    if (lastFourDigits && timeRemaining > 0) {
+      timer = setInterval(() => {
+        setTimeRemaining(prev => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            setLastFourDigits('');
+            setShowCodeInput(true);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [lastFourDigits]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -424,7 +449,11 @@ function FirstTime() {
 
         await setDoc(doc(db, "VisitorEntries", entryId), submissionData);
         alert('Form submitted successfully!');
-        setFormData({ ...formData, id: entryId });
+        
+        // Set last four digits and start timer
+        const lastFour = entryId.slice(-4);
+        setLastFourDigits(lastFour);
+        setTimeRemaining(120);
         setShowTimeoutForm(true);
 
         localStorage.setItem('showTimeoutForm', 'true');
@@ -435,49 +464,82 @@ function FirstTime() {
     }
 
     setIsLoading(false);
-};
+  };
 
-const handleTimeoutSubmit = async () => {
-  if (!formData.timeOut) {
-      alert('Please enter the time out before submitting.');
+  const handleCodeVerification = async () => {
+    if (codeInput.length !== 4) {
+      alert('Please enter a 4-digit code');
       return;
-  }
+    }
 
-  setIsLoading(true);
-
-  try {
-      const now = new Date();
-      const formattedTimeOut = formData.timeOut || now.toTimeString().split(' ')[0]; // Default to current time if not provided
-
-      await setDoc(
-          doc(db, "VisitorEntries", formData.id),
-          { timeOut: formattedTimeOut },
-          { merge: true }
+    try {
+      // Query to find the user with the matching ID ending with the code
+      const q = query(
+        collection(db, "VisitorEntries"), 
+        where("id", ">=", ""), 
+        where("id", "<=", "zzzzzzz")
+      );
+      
+      const querySnapshot = await getDocs(q);
+      
+      const matchedUser = querySnapshot.docs.find(doc => 
+        doc.data().id.slice(-4) === codeInput
       );
 
-      alert('Timeout recorded successfully! Thank you for visiting us.');
-      setShowTimeoutForm(false);
-      setFormData({
-          name: '',
-          reason: '',
-          department: '',
-          purpose: '',
-          telephone: '',
-          company: '',
-          timeOut: '',
-          picture: null,
-          id: '',
-      });
+      if (matchedUser) {
+        setVerifiedUser(matchedUser.data());
+        setShowCodeInput(false);
+      } else {
+        alert('No matching user found. Please check the code.');
+      }
+    } catch (error) {
+      console.error("Error verifying code:", error);
+      alert('An error occurred while verifying the code.');
+    }
+  };
 
-      localStorage.removeItem('showTimeoutForm');
-      localStorage.removeItem('formData');
-  } catch (error) {
-      console.error("Error submitting timeout to Firestore:", error);
-      alert('An error occurred while recording timeout.');
-  } finally {
-      setIsLoading(false);
-  }
-};
+  const handleTimeoutSubmit = async () => {
+    if (!formData.timeOut) {
+        alert('Please enter the time out before submitting.');
+        return;
+    }
+
+    setIsLoading(true);
+
+    try {
+        const now = new Date();
+        const formattedTimeOut = formData.timeOut || now.toTimeString().split(' ')[0]; // Default to current time if not provided
+
+        await setDoc(
+            doc(db, "VisitorEntries", verifiedUser.id),
+            { timeOut: formattedTimeOut },
+            { merge: true }
+        );
+
+        alert('Timeout recorded successfully! Thank you for visiting us.');
+        setShowTimeoutForm(false);
+        setFormData({
+            name: '',
+            reason: '',
+            department: '',
+            purpose: '',
+            telephone: '',
+            company: '',
+            timeOut: '',
+            picture: null,
+            id: '',
+        });
+
+        localStorage.removeItem('showTimeoutForm');
+        localStorage.removeItem('formData');
+        setVerifiedUser(null);
+    } catch (error) {
+        console.error("Error submitting timeout to Firestore:", error);
+        alert('An error occurred while recording timeout.');
+    } finally {
+        setIsLoading(false);
+    }
+  };
 
   return (
     <div style={{ backgroundColor: '#0F384A' }}>
@@ -516,9 +578,37 @@ const handleTimeoutSubmit = async () => {
           </form>
         )}
 
-        {showTimeoutForm && (
+        {lastFourDigits && (
+          <div style={styles.codeContainer}>
+            <h2>Please copy your verification code for time out:</h2>
+            <p style={styles.verificationCode}>{lastFourDigits}</p>
+            <p>Time Remaining: {Math.floor(timeRemaining / 60)}:{timeRemaining % 60 < 10 ? '0' : ''}{timeRemaining % 60}</p>
+          </div>
+        )}
+
+        {showCodeInput && (
+          <div style={styles.codeInputContainer}>
+            <h2>Enter Verification Code</h2>
+            <input 
+              type="text" 
+              value={codeInput} 
+              onChange={(e) => setCodeInput(e.target.value)}
+              maxLength="4"
+              style={styles.input}
+              placeholder="Enter 4-digit code"
+            />
+            <button 
+              onClick={handleCodeVerification} 
+              style={styles.submitButton}
+            >
+              Verify Code
+            </button>
+          </div>
+        )}
+
+        {verifiedUser && (
           <div style={styles.timeoutForm}>
-            <h2 style={{ color: 'red' }}>Please record your Time Out when you are leaving:</h2>
+            <h2 style={{ color: 'red' }}>Hello, {verifiedUser.name}. Please record your Time Out:</h2>
             {renderInput('Time Out', 'timeOut', 'time', formData, handleChange)}
             <button
               onClick={handleTimeoutSubmit}
@@ -548,6 +638,7 @@ const renderInput = (label, name, type, formData, handleChange, required = true)
   </div>
 );
 
+
 const styles = {
   formContainer: {
     maxWidth: '100%',
@@ -566,6 +657,26 @@ const styles = {
     width: '80px',
     height: '80px',
     borderRadius: '50%',
+  },
+  codeContainer: {
+    textAlign: 'center',
+    backgroundColor: '#f0f4ff',
+    padding: '20px',
+    borderRadius: '10px',
+    marginTop: '20px',
+  },
+  verificationCode: {
+    fontSize: '48px',
+    fontWeight: 'bold',
+    color: '#007bff',
+    letterSpacing: '10px',
+  },
+  codeInputContainer: {
+    textAlign: 'center',
+    backgroundColor: '#f0f4ff',
+    padding: '20px',
+    borderRadius: '10px',
+    marginTop: '20px',
   },
   logoText: {
     fontSize: '20px',
@@ -628,6 +739,26 @@ const styles = {
   },
   timeoutForm: {
     textAlign: 'center',
+  },
+  codeContainer: {
+    textAlign: 'center',
+    backgroundColor: '#f0f4ff',
+    padding: '20px',
+    borderRadius: '10px',
+    marginTop: '20px',
+  },
+  verificationCode: {
+    fontSize: '48px',
+    fontWeight: 'bold',
+    color: '#007bff',
+    letterSpacing: '10px',
+  },
+  codeInputContainer: {
+    textAlign: 'center',
+    backgroundColor: '#f0f4ff',
+    padding: '20px',
+    borderRadius: '10px',
+    marginTop: '20px',
   },
 };
 
