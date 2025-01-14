@@ -1,0 +1,351 @@
+/* welcome.css */
+
+/* Modal Styles */
+.popup-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+  }
+  
+  .popup {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+    max-width: 500px;
+    width: 90%;
+  }
+  
+  .popup-title {
+    font-size: 24px;
+    font-weight: bold;
+    background: linear-gradient(to right, #3498db, #2ecc71);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 15px;
+  }
+  
+  .popup-message {
+    font-size: 16px;
+    line-height: 1.5;
+    color: #C3A53E;
+    margin-bottom: 20px;
+  }
+  
+  .checkbox-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+  }
+  
+  .checkbox-label {
+    margin-left: 10px;
+    font-size: 14px;
+    color: #7f8c8d;
+  }
+  
+  .popup-button {
+    background: linear-gradient(to right, #3498db, #2ecc71);
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+  }
+  
+  .popup-button:disabled {
+    background: #bdc3c7;
+    cursor: not-allowed;
+  }
+  
+  .popup-button:not(:disabled):hover {
+    opacity: 0.9;
+    transform: translateY(-2px);
+  }
+  
+  /* User Type Modal Styles */
+  .user-type-modal {
+    background: white;
+    padding: 40px;
+    border-radius: 25px;
+    text-align: center;
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+    max-width: 800px;
+    width: 90%;
+    animation: modalFadeIn 0.3s ease-out;
+  }
+  
+  @keyframes modalFadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .modal-title {
+    font-size: 32px;
+    font-weight: bold;
+    background: linear-gradient(135deg, #3498db, #2ecc71);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 20px;
+  }
+  
+  .modal-description {
+    font-size: 18px;
+    color: #7f8c8d;
+    margin-bottom: 40px;
+  }
+  
+  .user-type-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    padding: 20px;
+  }
+  
+  .user-type-option {
+    flex: 1;
+    max-width: 280px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .user-type-btn {
+    width: 200px;
+    height: 200px;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .user-type-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    transform: scale(0);
+    transition: transform 0.3s ease;
+  }
+  
+  .dispatch-btn {
+    background: linear-gradient(135deg, #00b4db, #0083b0);
+    box-shadow: 0 10px 20px rgba(0, 180, 219, 0.3);
+  }
+  
+  .visitor-btn {
+    background: linear-gradient(135deg, #56ab2f, #a8e063);
+    box-shadow: 0 10px 20px rgba(86, 171, 47, 0.3);
+  }
+  
+  .btn-icon {
+    font-size: 48px;
+    margin-bottom: 10px;
+    transition: transform 0.3s ease;
+  }
+  
+  .btn-text {
+    font-size: 20px;
+    font-weight: bold;
+    color: white;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  
+  .option-description {
+    font-size: 15px;
+    color: #95a5a6;
+    line-height: 1.6;
+    max-width: 220px;
+    margin-top: 15px;
+  }
+  
+  .user-type-btn:hover {
+    transform: translateY(-8px);
+  }
+  
+  .user-type-btn:hover::before {
+    transform: scale(1.5);
+  }
+  
+  .user-type-btn:hover .btn-icon {
+    transform: scale(1.2);
+  }
+  
+  /* General Container Styles */
+  .welcome-container {
+    text-align: center;
+    padding: 30px;
+    border-radius: 20px;
+    background-color: white;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 800px;
+    margin: 20px;
+  }
+  
+  .logo-container {
+    text-align: center;
+    margin-bottom: 30px;
+  }
+  
+  .logo {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    transition: transform 0.3s ease;
+  }
+  
+  .logo:hover {
+    transform: scale(1.05);
+  }
+  
+  .logo-text {
+    font-size: 24px;
+    font-weight: bold;
+    margin-top: 15px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    background: linear-gradient(to right, #3498db, #2ecc71);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  
+  .welcome-header {
+    margin: 30px 0;
+  }
+  
+  .welcome-title {
+    font-size: 28px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 20px;
+  }
+  
+  .welcome-description {
+    font-size: 16px;
+    color: #7f8c8d;
+    margin-bottom: 30px;
+  }
+  
+  .button-container {
+    display: flex;
+    justify-content: center;
+    gap: 25px;
+    flex-wrap: wrap;
+  }
+  
+  .button {
+    padding: 14px 35px;
+    font-size: 16px;
+    font-weight: 500;
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    width: 200px;
+  }
+  
+  .first-time-btn {
+    background: linear-gradient(135deg, #2ecc71, #27ae60);
+    color: white;
+  }
+  
+  .been-here-btn {
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    color: white;
+  }
+  
+  .button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+  }
+  
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .user-type-buttons {
+      flex-direction: column;
+      align-items: center;
+      gap: 30px;
+    }
+  
+    .user-type-btn {
+      width: 160px;
+      height: 160px;
+    }
+  
+    .btn-icon {
+      font-size: 36px;
+    }
+  
+    .btn-text {
+      font-size: 16px;
+    }
+  
+    .modal-title {
+      font-size: 24px;
+    }
+  
+    .modal-description {
+      font-size: 16px;
+    }
+  
+    .welcome-title {
+      font-size: 24px;
+    }
+  
+    .button {
+      width: 180px;
+      padding: 12px 25px;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .user-type-btn {
+      width: 140px;
+      height: 140px;
+    }
+  
+    .welcome-container {
+      padding: 20px;
+      margin: 10px;
+    }
+  
+    .button {
+      width: 160px;
+      padding: 10px 20px;
+      font-size: 14px;
+    }
+  }
