@@ -639,6 +639,8 @@
 //     />
 //   </div>
 // );
+
+
 import React, { useState } from 'react';
 import { getFirestore, doc, setDoc, collection, getDocs, query, where } from "firebase/firestore";
 import app from '../Config';
@@ -652,11 +654,40 @@ function FirstTime() {
     name: '',
     reason: '',
     department: '',
+    branch: '',
     purpose: '',
     telephone: '',
     company: '',
     picture: null,
   });
+
+  const departments = [
+    'Select Department',
+    'Human Resources',
+    'Finance',
+    'Information Technology',
+    'Operations',
+    'Marketing',
+    'Legal',
+    'Customer Service',
+    'Risk Management',
+    'Compliance',
+    'Treasury'
+  ];
+
+  const branches = [
+    'Select Branch',
+    'Main Branch',
+    'Downtown Branch',
+    'West End Branch',
+    'East Side Branch',
+    'North Branch',
+    'South Branch',
+    'Central Branch',
+    'Business District Branch',
+    'Industrial Area Branch',
+    'Suburban Branch'
+  ];
 
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -714,6 +745,7 @@ function FirstTime() {
             name: formData.name,
             reason: formData.reason,
             department: formData.department,
+            branch: formData.branch,
             purpose: formData.purpose,
             telephone: formData.telephone,
             company: formData.company,
@@ -749,7 +781,38 @@ function FirstTime() {
         <form onSubmit={handleSubmit} style={styles.form}>
           {renderInput('Name', 'name', 'text', formData, handleChange)}
           {renderInput('Reason to See', 'reason', 'text', formData, handleChange, false)}
-          {renderInput('Department', 'department', 'text', formData, handleChange, false)}
+          <div style={styles.formGroup}>
+            <label style={styles.label}>Department:</label>
+            <select
+              name="department"
+              value={formData.department}
+              onChange={handleChange}
+              style={styles.input}
+              required
+            >
+              {departments.map((dept, index) => (
+                <option key={index} value={index === 0 ? '' : dept}>
+                  {dept}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div style={styles.formGroup}>
+            <label style={styles.label}>Branch:</label>
+            <select
+              name="branch"
+              value={formData.branch}
+              onChange={handleChange}
+              style={styles.input}
+              required
+            >
+              {branches.map((branch, index) => (
+                <option key={index} value={index === 0 ? '' : branch}>
+                  {branch}
+                </option>
+              ))}
+            </select>
+          </div>
           {renderInput('Purpose', 'purpose', 'text', formData, handleChange, false)}
           {renderInput('Telephone', 'telephone', 'tel', formData, handleChange)}
           {renderInput('Company', 'company', 'text', formData, handleChange)}
