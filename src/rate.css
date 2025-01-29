@@ -1,0 +1,98 @@
+/* Satisfaction Rating Popup Styles */
+.satisfaction-popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+  }
+  
+  .satisfaction-popup {
+    background-color: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    max-width: 400px;
+    width: 90%;
+    text-align: center;
+  }
+  
+  .satisfaction-title {
+    color: #333;
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+  }
+  
+  .satisfaction-description {
+    color: #666;
+    margin-bottom: 2rem;
+  }
+  
+  .satisfaction-options {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 2rem;
+    gap: 1rem;
+  }
+  
+  .satisfaction-button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    background: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+  
+  .satisfaction-button:hover {
+    border-color: #007bff;
+    background-color: #f8f9fa;
+  }
+  
+  .satisfaction-button span[role="img"] {
+    font-size: 2rem;
+  }
+  
+  .satisfaction-button span:not([role="img"]) {
+    font-size: 0.9rem;
+    color: #333;
+  }
+  
+  .satisfaction-skip-button {
+    background: none;
+    border: none;
+    color: #666;
+    text-decoration: underline;
+    cursor: pointer;
+    padding: 0.5rem 1rem;
+    margin-top: 1rem;
+  }
+  
+  .satisfaction-skip-button:hover {
+    color: #333;
+  }
+  
+  /* Animation for popup appearance */
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .satisfaction-popup {
+    animation: fadeIn 0.3s ease-out;
+  }

@@ -8,9 +8,12 @@ import {
   getDocs,
   updateDoc,
   doc,
+  addDoc,
 } from 'firebase/firestore';
 import app from '../Config';
-import "../dispatch.css"
+import "../dispatch.css";
+import "../rate.css"
+
 function Welcome() {
   const navigate = useNavigate();
   const [showPopup, setShowPopup] = useState(false);
@@ -21,6 +24,9 @@ function Welcome() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [latestVisit, setLatestVisit] = useState(null);
+  const [showSatisfactionPopup, setShowSatisfactionPopup] = useState(false);
+  const [currentVisitId, setCurrentVisitId] = useState(null);
+
 
   const db = getFirestore(app);
 
@@ -81,7 +87,7 @@ function Welcome() {
     setLoading(false);
   };
 
-  const handleLogoutSubmit = async () => {
+  const handleTimeOutSubmit = async () => {
     if (!selectedTimeOut || !latestVisit) {
       setError('Please select a time out.');
       return;
@@ -94,16 +100,35 @@ function Welcome() {
       const visitRef = doc(db, 'VisitorEntries', latestVisit.id);
       await updateDoc(visitRef, { timeOut: selectedTimeOut });
       
-      setError('Time out logged successfully!');
-      setShowLogoutModal(false);
-      setLatestVisit(null);
-      setSelectedTimeOut('');
-      setLogoutPhoneNumber('');
+      // Immediately show satisfaction popup after successful timeout submission
+      setCurrentVisitId(latestVisit.id);
+      setShowSatisfactionPopup(true);
     } catch (err) {
       setError('Error logging time out. Please try again.');
     }
     setLoading(false);
   };
+
+  const handleSatisfactionSubmit = async (rating) => {
+    try {
+      await addDoc(collection(db, 'Satisfaction'), {
+        visitId: currentVisitId,
+        rating: rating,
+        timestamp: new Date().toISOString()
+      });
+      
+      // Clear all states and show thank you message
+      setShowSatisfactionPopup(false);
+      setLatestVisit(null);
+      setSelectedTimeOut('');
+      setLogoutPhoneNumber('');
+      setCurrentVisitId(null);
+      setError('Thank you for your feedback!');
+    } catch (err) {
+      setError('Error submitting feedback. Please try again.');
+    }
+  };
+ 
 
   return (
     <div className="welcome-container">
@@ -198,7 +223,7 @@ function Welcome() {
                   className="modal-input"
                 />
                 <button
-                  onClick={handleLogoutSubmit}
+                  onClick={handleTimeOutSubmit}
                   className="popup-button"
                   disabled={loading}
                 >
@@ -222,7 +247,55 @@ function Welcome() {
               Cancel
             </button>
           </div>
+          {showSatisfactionPopup && (
+        <div className="satisfaction-popup-overlay">
+          <div className="satisfaction-popup">
+            <h2 className="satisfaction-title">How was your experience?</h2>
+            <p className="satisfaction-description">Please rate our service:</p>
+            
+            <div className="satisfaction-options">
+              <button 
+                className="satisfaction-button"
+                onClick={() => handleSatisfactionSubmit('excellent')}
+              >
+                <span role="img" aria-label="excellent">😊</span>
+                <span>Excellent</span>
+              </button>
+              
+              <button 
+                className="satisfaction-button"
+                onClick={() => handleSatisfactionSubmit('good')}
+              >
+                <span role="img" aria-label="good">🙂</span>
+                <span>Good</span>
+              </button>
+              
+              <button 
+                className="satisfaction-button"
+                onClick={() => handleSatisfactionSubmit('bad')}
+              >
+                <span role="img" aria-label="bad">☹️</span>
+                <span>Bad</span>
+              </button>
+            </div>
+
+            <button
+              className="satisfaction-skip-button"
+              onClick={() => {
+                setShowSatisfactionPopup(false);
+                setLatestVisit(null);
+                setSelectedTimeOut('');
+                setLogoutPhoneNumber('');
+                setCurrentVisitId(null);
+              }}
+            >
+              Skip
+            </button>
+          </div>
         </div>
+      )}
+    </div>
+      
       )}
 
       <style>

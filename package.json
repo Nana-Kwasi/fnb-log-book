@@ -1,6 +1,6 @@
 {
   "name": "visitors-log-book",
-  "version": "0.2.7",
+  "version": "0.2.9",
   "private": true,
   "dependencies": {
     "@react-pdf/renderer": "^4.1.6",
@@ -8,6 +8,7 @@
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
     "firebase": "^11.0.1",
+    "lucide-react": "^0.471.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.28.0",

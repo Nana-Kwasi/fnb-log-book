@@ -640,14 +640,14 @@
 //   </div>
 // );
 
-
-import React, { useState } from 'react';
-import { getFirestore, doc, setDoc, collection, getDocs, query, where } from "firebase/firestore";
+import React, { useState, useEffect } from 'react';
+import { getFirestore, doc, setDoc, collection, getDocs, query, where, addDoc } from "firebase/firestore";
 import app from '../Config';
 import { v4 as uuidv4 } from 'uuid';
 import { useNavigate } from 'react-router-dom';
 
 function FirstTime() {
+
   const db = getFirestore(app);
   const navigate = useNavigate()
   const [formData, setFormData] = useState({
@@ -661,7 +661,7 @@ function FirstTime() {
     picture: null,
   });
 
-  const departments = [
+  const [departments, setDepartments] = useState([
     'Select Department',
     'Human Resources',
     'Finance',
@@ -673,21 +673,113 @@ function FirstTime() {
     'Risk Management',
     'Compliance',
     'Treasury'
-  ];
+  ]);
 
-  const branches = [
-    'Select Branch',
-    'Main Branch',
-    'Downtown Branch',
-    'West End Branch',
-    'East Side Branch',
-    'North Branch',
-    'South Branch',
-    'Central Branch',
-    'Business District Branch',
-    'Industrial Area Branch',
-    'Suburban Branch'
-  ];
+  const [newDepartment, setNewDepartment] = useState('');
+  const [showAddDepartment, setShowAddDepartment] = useState(false);
+  const [newBranch, setNewBranch] = useState({ name: '', code: '' });
+  const [showAddBranch, setShowAddBranch] = useState(false);
+
+
+  // Fetch departments from Firestore on component mount
+  useEffect(() => {
+    fetchDepartments();
+    fetchBranches();
+  }, []);
+
+  const fetchDepartments = async () => {
+    try {
+      const departmentsCollection = collection(db, "departments");
+      const departmentsSnapshot = await getDocs(departmentsCollection);
+      const departmentsList = departmentsSnapshot.docs.map(doc => doc.data().name);
+      
+      // Combine default departments with stored ones, removing duplicates
+      const allDepartments = ['Select Department', ...new Set([...departments.slice(1), ...departmentsList])];
+      setDepartments(allDepartments);
+    } catch (error) {
+      console.error("Error fetching departments:", error);
+    }
+  };
+  const fetchBranches = async () => {
+    try {
+      const branchesCollection = collection(db, "branches");
+      const branchesSnapshot = await getDocs(branchesCollection);
+      const branchesList = branchesSnapshot.docs.map(doc => ({
+        label: doc.data().name,
+        value: doc.data().code
+      }));
+      const allBranches = [{ label: 'Select Branch', value: '' }, ...branches.slice(1), ...branchesList];
+      setBranches(allBranches);
+    } catch (error) {
+      console.error("Error fetching branches:", error);
+    }
+  };
+
+  const handleAddDepartment = async () => {
+    if (newDepartment.trim() === '') return;
+
+    try {
+      const departmentsCollection = collection(db, "departments");
+      await addDoc(departmentsCollection, {
+        name: newDepartment.trim(),
+        timestamp: new Date()
+      });
+
+      setDepartments(prev => [...prev, newDepartment.trim()]);
+      setNewDepartment('');
+      setShowAddDepartment(false);
+    } catch (error) {
+      console.error("Error adding department:", error);
+      setError('Failed to add department. Please try again.');
+    }
+  };
+
+  const handleAddBranch = async () => {
+    if (newBranch.name.trim() === '' || newBranch.code.trim() === '') return;
+
+    try {
+      const branchesCollection = collection(db, "branches");
+      await addDoc(branchesCollection, {
+        name: newBranch.name.trim(),
+        code: newBranch.code.trim(),
+        timestamp: new Date()
+      });
+
+      setBranches(prev => [...prev, { label: newBranch.name.trim(), value: newBranch.code.trim() }]);
+      setNewBranch({ name: '', code: '' });
+      setShowAddBranch(false);
+    } catch (error) {
+      console.error("Error adding branch:", error);
+      setError('Failed to add branch. Please try again.');
+    }
+  };
+
+  const handleRemoveDepartment = (deptToRemove) => {
+    setDepartments(prev => prev.filter(dept => dept !== deptToRemove));
+  };
+
+  const handleRemoveBranch = (branchToRemove) => {
+    setBranches(prev => prev.filter(branch => branch.value !== branchToRemove.value));
+  };
+
+ 
+
+
+  const [branches, setBranches] = useState([
+    { label: 'Select Branch', value: '' },
+    { label: 'ACCRA BRANCH', value: '330102' },
+    { label: 'MAKOLA BRANCH', value: '330111' },
+    { label: 'TEMA BRANCH (COMM', value: '330120' },
+    { label: 'AIRPORT BRANCH', value: '330119' },
+    { label: 'MARKET CIRCLE BRANCH TAKORADI', value: '330401' },
+    { label: 'ADUM BRANCH KUMASI', value: '330601' },
+    { label: 'WEST HILLS MALL', value: '330108' },
+    { label: 'JUNCTION SHOPPING CENTRE BRANCH', value: '330101' },
+    { label: 'TEMA BRANCH (COMM 11)', value: '330112' },
+    { label: 'ACHIMOTA MALL BRANCH', value: '330107' },
+    { label: 'ACCRA MALL BRANCH', value: '330106' },
+    { label: 'KEJETIA BRANCH', value: '330602' }
+  ]);
 
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -781,38 +873,125 @@ function FirstTime() {
         <form onSubmit={handleSubmit} style={styles.form}>
           {renderInput('Name', 'name', 'text', formData, handleChange)}
           {renderInput('Reason to See', 'reason', 'text', formData, handleChange, false)}
-          <div style={styles.formGroup}>
+
+           <div style={styles.formGroup}>
             <label style={styles.label}>Department:</label>
-            <select
-              name="department"
-              value={formData.department}
-              onChange={handleChange}
-              style={styles.input}
-              required
-            >
-              {departments.map((dept, index) => (
-                <option key={index} value={index === 0 ? '' : dept}>
-                  {dept}
-                </option>
-              ))}
-            </select>
+            <div style={styles.departmentContainer}>
+              <select
+                name="department"
+                value={formData.department}
+                onChange={handleChange}
+                style={styles.departmentSelect}
+                required
+              >
+                {departments.map((dept, index) => (
+                  <option key={index} value={index === 0 ? '' : dept}>
+                    {dept}
+                    {index !== 0 && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleRemoveDepartment(dept);
+                        }}
+                        style={styles.removeButton}
+                      >
+                        -
+                      </button>
+                    )}
+                  </option>
+                ))}
+              </select>
+              <button 
+                type="button" 
+                onClick={() => setShowAddDepartment(!showAddDepartment)}
+                style={styles.addDepartmentButton}
+              >
+                +
+              </button>
+            </div>
+            {showAddDepartment && (
+              <div style={styles.addDepartmentForm}>
+                <input
+                  type="text"
+                  value={newDepartment}
+                  onChange={(e) => setNewDepartment(e.target.value)}
+                  placeholder="Enter new department"
+                  style={styles.input}
+                />
+                <button 
+                  type="button"
+                  onClick={handleAddDepartment}
+                  style={styles.submitDepartmentButton}
+                >
+                  Add
+                </button>
+              </div>
+            )}
           </div>
-          <div style={styles.formGroup}>
+
+           <div style={styles.formGroup}>
             <label style={styles.label}>Branch:</label>
-            <select
-              name="branch"
-              value={formData.branch}
-              onChange={handleChange}
-              style={styles.input}
-              required
-            >
-              {branches.map((branch, index) => (
-                <option key={index} value={index === 0 ? '' : branch}>
-                  {branch}
-                </option>
-              ))}
-            </select>
-          </div>
+            <div style={styles.departmentContainer}>
+              <select
+                name="branch"
+                value={formData.branch}
+                onChange={handleChange}
+                style={styles.input}
+                required
+              >
+                {branches.map((branch, index) => (
+                  <option key={index} value={branch.value}>
+                    {branch.label}
+                    {index !== 0 && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleRemoveBranch(branch);
+                        }}
+                        style={styles.removeButton}
+                      >
+                        -
+                      </button>
+                    )}
+                  </option>
+                ))}
+              </select>
+              <button 
+                type="button" 
+                onClick={() => setShowAddBranch(!showAddBranch)}
+                style={styles.addDepartmentButton}
+              >
+                +
+              </button>
+            </div>
+            {showAddBranch && (
+              <div style={styles.addBranchForm}>
+                <input
+                  type="text"
+                  value={newBranch.name}
+                  onChange={(e) => setNewBranch({ ...newBranch, name: e.target.value })}
+                  placeholder="Enter branch name"
+                  style={styles.input}
+                />
+                <input
+                  type="text"
+                  value={newBranch.code}
+                  onChange={(e) => setNewBranch({ ...newBranch, code: e.target.value })}
+                  placeholder="Enter branch code"
+                  style={styles.input}
+                />
+                <button 
+                  type="button"
+                  onClick={handleAddBranch}
+                  style={styles.submitBranchButton}
+                >
+                  Add
+                </button>
+              </div>
+            )}
+            </div>
           {renderInput('Purpose', 'purpose', 'text', formData, handleChange, false)}
           {renderInput('Telephone', 'telephone', 'tel', formData, handleChange)}
           {renderInput('Company', 'company', 'text', formData, handleChange)}
@@ -850,7 +1029,45 @@ const renderInput = (label, name, type, formData, handleChange, required = true)
   </div>
 );
 
-const styles = {
+
+ const styles = {
+  // ... (previous styles remain the same)
+  departmentContainer: {
+    display: 'flex',
+    gap: '10px',
+    alignItems: 'center',
+  },
+  departmentSelect: {
+    flex: 1,
+    padding: '10px',
+    borderRadius: '8px',
+    border: '1px solid #d3d3d3',
+    fontSize: '16px',
+    outline: 'none',
+  },
+  addDepartmentButton: {
+    padding: '8px 16px',
+    backgroundColor: '#046063',
+    color: 'white',
+    border: 'none',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    fontSize: '18px',
+  },
+  addDepartmentForm: {
+    marginTop: '10px',
+    display: 'flex',
+    gap: '10px',
+  },
+  submitDepartmentButton: {
+    padding: '8px 16px',
+    backgroundColor: '#046063',
+    color: 'white',
+    border: 'none',
+    borderRadius: '8px',
+    cursor: 'pointer',
+  },
+  // ... (rest of the previous styles)
   formContainer: {
     maxWidth: '100%',
     margin: '20px auto',
@@ -948,6 +1165,19 @@ const styles = {
     marginBottom: '10px',
     fontSize: '14px',
   },
+  removeButton: {
+    padding: '6px 12px',
+    backgroundColor: '#dc3545',
+    color: 'red',
+    border: 'none',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    fontSize: '14px',
+    transition: 'all 0.3s ease',
+    '&:hover': {
+      backgroundColor: '#c82333',
+    },
+  },
   timeoutForm: {
     textAlign: 'center',
   },
@@ -971,11 +1201,10 @@ const styles = {
     borderRadius: '10px',
     marginTop: '20px',
   },
+ 
 };
 
 export default FirstTime;
-
-
 
 // import React, { useState, useEffect } from 'react';
 // import { getFirestore, doc, setDoc } from "firebase/firestore";
