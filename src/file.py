@@ -9,7 +9,7 @@ from torch.utils.data import Dataset
 from sklearn.model_selection import train_test_split
 
 # Load and prepare the dataset
-file_path = 'C:/Users/Nana kwasi/Downloads/Lastss.csv'
+file_path = 'C:/Users/f8877557/Downloads/Last.csv'
 try:
     data = pd.read_csv(file_path, encoding='ISO-8859-1', sep=',', on_bad_lines='skip')
     if 'Question' not in data.columns or 'Answer' not in data.columns:
@@ -96,8 +96,8 @@ val_dataset = QADataset(val_data, tokenizer)
 # Training arguments
 training_args = TrainingArguments(
     output_dir="./qa_results",
-    evaluation_strategy="epoch",
-    save_strategy="no",  # Disable intermediate checkpoint saves
+    eval_strategy="epoch",            
+    save_strategy="epoch",           \
     logging_dir="./logs",
     learning_rate=3e-5,
     per_device_train_batch_size=8,
@@ -146,9 +146,8 @@ save_path = "./trained_model"
 model.save_pretrained(save_path)
 tokenizer.save_pretrained(save_path)
 print(f"Final model and tokenizer saved to {save_path}")
-
 # Test prediction
-def predict_with_fallback(model, tokenizer, question, context="", confidence_threshold=0.5):
+def predict_with_fallback(model, tokenizer, question, context="", confidence_threshold=0.2):
     """
     Predicts the answer and provides a default response if confidence is too low.
     """
