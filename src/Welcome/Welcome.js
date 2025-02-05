@@ -24,19 +24,19 @@ function Welcome() {
 
   const db = getFirestore(app);
 
-  useEffect(() => {
-    // Check if the user has already agreed to the terms
-    const agreementStatus = localStorage.getItem('hasAgreed');
-    if (!agreementStatus) {
-      setShowPopup(true);
-    }
-  }, []);
+  // useEffect(() => {
+  //   // Check if the user has already agreed to the terms
+  //   const agreementStatus = localStorage.getItem('hasAgreed');
+  //   if (!agreementStatus) {
+  //     setShowPopup(true);
+  //   }
+  // }, []);
 
-  const handleAgree = () => {
-    setIsAgreed(true);
-    setShowPopup(false);
-    localStorage.setItem('hasAgreed', 'true'); // Store the agreement status in localStorage
-  };
+  // const handleAgree = () => {
+  //   setIsAgreed(true);
+  //   setShowPopup(false);
+  //   localStorage.setItem('hasAgreed', 'true'); // Store the agreement status in localStorage
+  // };
   const handleLogoutVerification = async () => {
     if (!logoutPhoneNumber.match(/^\d+$/)) {
       setError('Please enter a valid phone number.');
@@ -107,7 +107,7 @@ function Welcome() {
 
   return (
     <div className="welcome-container">
-      {showPopup && (
+      {/* {showPopup && (
         <div className="popup-container">
           <div className="popup">
             <h2 className="popup-title">Welcome!</h2>
@@ -136,7 +136,7 @@ function Welcome() {
             </button>
           </div>
         </div>
-      )}
+      )} */}
       {!showPopup && (
         <>
           <div className="logo-container">
