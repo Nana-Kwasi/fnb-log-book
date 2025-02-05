@@ -640,8 +640,7 @@
 //   </div>
 // );
 
-
-import React, { useState } from 'react';
+import React, { useState,useEffect } from 'react';
 import { getFirestore, doc, setDoc, collection, getDocs, query, where } from "firebase/firestore";
 import app from '../Config';
 import { v4 as uuidv4 } from 'uuid';
@@ -649,6 +648,8 @@ import { useNavigate } from 'react-router-dom';
 
 function FirstTime() {
   const db = getFirestore(app);
+  const [showPopup, setShowPopup] = useState(true); // Always start as true
+  const [isAgreed, setIsAgreed] = useState(false);
   const navigate = useNavigate()
   const [formData, setFormData] = useState({
     name: '',
@@ -695,6 +696,11 @@ function FirstTime() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
+  };
+
+  const handleAgree = () => {
+    setIsAgreed(true);
+    setShowPopup(false);
   };
 
   const handlePictureCapture = (e) => {
@@ -777,7 +783,36 @@ function FirstTime() {
           <h1>Welcome Visitor</h1>
           <p>Please fill in the form below for your visit:</p>
         </header>
-
+        {showPopup && (
+        <div className="popup-container">
+          <div className="popup">
+            <h2 className="popup-title">Welcome!</h2>
+            <p className="popup-message">
+              At First National Bank, your data is being collected solely for the purpose of
+              recording and monitoring visitor entries to enhance security and operational efficiency.
+              By continuing, you agree to the terms of this data collection.
+            </p>
+            <div className="checkbox-container">
+              <input
+                type="checkbox"
+                id="agree"
+                checked={isAgreed}
+                onChange={(e) => setIsAgreed(e.target.checked)}
+              />
+              <label htmlFor="agree" className="checkbox-label">
+                I agree to the data collection policy.
+              </label>
+            </div>
+            <button
+              className="popup-button"
+              onClick={handleAgree}
+              disabled={!isAgreed}
+            >
+              Proceed
+            </button>
+          </div>
+        </div>
+      )}
         <form onSubmit={handleSubmit} style={styles.form}>
           {renderInput('Name', 'name', 'text', formData, handleChange)}
           {renderInput('Reason to See', 'reason', 'text', formData, handleChange, false)}

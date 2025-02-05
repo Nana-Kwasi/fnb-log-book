@@ -195,4 +195,4 @@ if __name__ == "__main__":
     
     # Save model
     model.save_pretrained("./trained_model")
-    tokenizer.save_pretrained("./trained_model")
+    tokenizer.save_pretrained("./trained_model") 
