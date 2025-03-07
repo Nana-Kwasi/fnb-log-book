@@ -33,11 +33,11 @@ const getVisitorLogById = async (req, res) => {
 };
 
 const createVisitorLog = async (req, res) => {
-  const { date, timeIn, timeOut, department, company, picture, telephone, reason, purpose, name } = req.body;
+  const { date, timeIn, timeOut, department, company, picture, telephone, reason, purpose, name, branch } = req.body;
   try {
     const result = await pool.query(
-      'INSERT INTO visitor_log (date, timeIn, timeOut, department, company, picture, telephone, reason, purpose, name) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *',
-      [date, timeIn, timeOut, department, company, picture, telephone, reason, purpose, name]
+      'INSERT INTO visitor_log (date, timeIn, timeOut, department, company, picture, telephone, reason, purpose, name, branch) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *',
+      [date, timeIn, timeOut, department, company, picture, telephone, reason, purpose, name, branch]
     );
     res.json(result.rows[0]);
   } catch (err) {
@@ -72,6 +72,54 @@ const deleteVisitorLog = async (req, res) => {
   }
 };
 
+const getAllDepartments = async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM departments ORDER BY name');
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Server error');
+  }
+};
+
+const createDepartment = async (req, res) => {
+  const { name } = req.body;
+  try {
+    const result = await pool.query(
+      'INSERT INTO departments (name, timestamp) VALUES ($1, NOW()) RETURNING *',
+      [name]
+    );
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Server error');
+  }
+};
+
+const getAllBranches = async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM branches ORDER BY name');
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Server error');
+  }
+};
+
+const createBranch = async (req, res) => {
+  const { name, code } = req.body;
+  try {
+    const result = await pool.query(
+      'INSERT INTO branches (name, code, timestamp) VALUES ($1, $2, NOW()) RETURNING *',
+      [name, code]
+    );
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Server error');
+  }
+};
+
 module.exports = {
   getAllVisitorLogs,
   getVisitorLogsByPhoneNumber,
@@ -79,7 +127,8 @@ module.exports = {
   createVisitorLog,
   updateVisitorLog,
   deleteVisitorLog,
+  getAllDepartments,
+  createDepartment,
+  getAllBranches,
+  createBranch
 };
-
-
-

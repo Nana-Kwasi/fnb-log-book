@@ -641,10 +641,9 @@
 // );
 
 
-
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
+import { useNavigate } from 'react-router-dom';
 
 function FirstTime() {
   const navigate = useNavigate();
@@ -659,59 +658,148 @@ function FirstTime() {
     picture: null,
   });
 
-  const departments = [
-    'Select Department',
-    'Human Resources',
-    'Finance',
-    'Information Technology',
-    'Operations',
-    'Marketing',
-    'Legal',
-    'Customer Service',
-    'Risk Management',
-    'Compliance',
-    'Treasury'
-  ];
-
-  const branches = [
-    'Select Branch',
-    'Main Branch',
-    'Downtown Branch',
-    'West End Branch',
-    'East Side Branch',
-    'North Branch',
-    'South Branch',
-    'Central Branch',
-    'Business District Branch',
-    'Industrial Area Branch',
-    'Suburban Branch'
-  ];
+  const [departments, setDepartments] = useState(['Select Department']);
+  const [newDepartment, setNewDepartment] = useState('');
+  const [showAddDepartment, setShowAddDepartment] = useState(false);
+  
+  const [branches, setBranches] = useState([{ label: 'Select Branch', value: '' }]);
+  const [newBranch, setNewBranch] = useState({ name: '', code: '' });
+  const [showAddBranch, setShowAddBranch] = useState(false);
 
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    fetchDepartments();
+    fetchBranches();
+  }, []);
+
+  const fetchDepartments = async () => {
+    try {
+      const response = await fetch('http://localhost:5001/departments');
+      const data = await response.json();
+      const departmentsList = data.map(dept => dept.name);
+      setDepartments(['Select Department', ...departmentsList]);
+    } catch (error) {
+      console.error("Error fetching departments:", error);
+    }
+  };
+
+  const fetchBranches = async () => {
+    try {
+      const response = await fetch('http://localhost:5001/branches');
+      const data = await response.json();
+      const branchesList = data.map(branch => ({
+        label: branch.name,
+        value: branch.code
+      }));
+      setBranches([{ label: 'Select Branch', value: '' }, ...branchesList]);
+    } catch (error) {
+      console.error("Error fetching branches:", error);
+    }
+  };
+
+  const handleAddDepartment = async () => {
+    if (newDepartment.trim() === '') return;
+
+    try {
+      const response = await fetch('http://localhost:5001/departments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: newDepartment.trim()
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to add department');
+      }
+
+      const addedDepartment = await response.json();
+      setDepartments(prev => [...prev, addedDepartment.name]);
+      setNewDepartment('');
+      setShowAddDepartment(false);
+    } catch (error) {
+      console.error("Error adding department:", error);
+      setError('Failed to add department. Please try again.');
+    }
+  };
+
+  const handleAddBranch = async () => {
+    if (newBranch.name.trim() === '' || newBranch.code.trim() === '') return;
+
+    try {
+      const response = await fetch('http://localhost:5001/branches', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: newBranch.name.trim(),
+          code: newBranch.code.trim()
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to add branch');
+      }
+
+      const addedBranch = await response.json();
+      setBranches(prev => [...prev, { label: addedBranch.name, value: addedBranch.code }]);
+      setNewBranch({ name: '', code: '' });
+      setShowAddBranch(false);
+    } catch (error) {
+      console.error("Error adding branch:", error);
+      setError('Failed to add branch. Please try again.');
+    }
+  };
+
+  const handleRemoveDepartment = (deptToRemove) => {
+    setDepartments(prev => prev.filter(dept => dept !== deptToRemove));
+  };
+
+  const handleRemoveBranch = (branchToRemove) => {
+    setBranches(prev => prev.filter(branch => branch.value !== branchToRemove.value));
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
 
-  const handlePictureCapture = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        setError('File size must be less than 5MB.');
-        return;
-      }
-
-      if (!['image/jpeg', 'image/png'].includes(file.type)) {
-        setError('Only JPEG and PNG formats are supported.');
-        return;
-      }
-
-      const reader = new FileReader();
-      reader.onloadend = () => setFormData({ ...formData, picture: reader.result });
-      reader.onerror = () => setError('Failed to process the image. Please try again.');
-      reader.readAsDataURL(file);
+  const handlePictureCapture = async () => {
+    try {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.capture = 'user';
+      
+      input.onchange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          if (file.size > 5 * 1024 * 1024) {
+            setError('File size must be less than 5MB.');
+            return;
+          }
+  
+          if (!['image/jpeg', 'image/png'].includes(file.type)) {
+            setError('Only JPEG and PNG formats are supported.');
+            return;
+          }
+  
+          const reader = new FileReader();
+          reader.onloadend = () => setFormData({ ...formData, picture: reader.result });
+          reader.onerror = () => setError('Failed to process the image. Please try again.');
+          reader.readAsDataURL(file);
+        }
+      };
+  
+      input.click();
+    } catch (err) {
+      setError('Failed to open camera. Please try again.');
+      console.error('Camera error:', err);
     }
   };
 
@@ -726,34 +814,52 @@ function FirstTime() {
     setIsLoading(true);
 
     try {
+      const phoneResponse = await fetch(`http://localhost:5001/visitors?telephone=${formData.telephone}`);
+      const existingUsers = await phoneResponse.json();
+
+      if (existingUsers.length > 0) {
+        setError('This Phone number has been used to check in before. Please click "Been Here Before" on the home page to log in with your number.');
+        setIsLoading(false);
+        return;
+      }
+
+      const entryId = uuidv4();
+      const now = new Date();
+      const formattedDate = now.toISOString().split('T')[0];
+      const formattedTime = now.toTimeString().split(' ')[0];
+
+      const submissionData = {
+        id: entryId,
+        name: formData.name,
+        reason: formData.reason,
+        department: formData.department,
+        branch: formData.branch,
+        purpose: formData.purpose,
+        telephone: formData.telephone,
+        company: formData.company,
+        picture: formData.picture,
+        date: formattedDate,
+        timeIn: formattedTime,
+        timeOut: null
+      };
+
       const response = await fetch('http://localhost:5001/visitors', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          name: formData.name,
-          reason: formData.reason,
-          department: formData.department,
-          branch: formData.branch,
-          purpose: formData.purpose,
-          telephone: formData.telephone,
-          company: formData.company,
-          picture: formData.picture,
-          date: new Date().toISOString().split('T')[0],
-          timeIn: new Date().toTimeString().split(' ')[0],
-        }),
+        body: JSON.stringify(submissionData),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to submit the form. Please try again later.');
+        throw new Error('Failed to submit the form');
       }
 
       alert('Thank you for Visiting First National Bank!');
       navigate('/');
     } catch (error) {
-      console.error("Error submitting data to the server:", error);
-      setError(error.message);
+      console.error("Error submitting data:", error);
+      setError('Failed to submit the form. Please try again later.');
     }
 
     setIsLoading(false);
@@ -774,37 +880,124 @@ function FirstTime() {
         <form onSubmit={handleSubmit} style={styles.form}>
           {renderInput('Name', 'name', 'text', formData, handleChange)}
           {renderInput('Reason to See', 'reason', 'text', formData, handleChange, false)}
+
           <div style={styles.formGroup}>
             <label style={styles.label}>Department:</label>
-            <select
-              name="department"
-              value={formData.department}
-              onChange={handleChange}
-              style={styles.input}
-              required
-            >
-              {departments.map((dept, index) => (
-                <option key={index} value={index === 0 ? '' : dept}>
-                  {dept}
-                </option>
-              ))}
-            </select>
+            <div style={styles.departmentContainer}>
+              <select
+                name="department"
+                value={formData.department}
+                onChange={handleChange}
+                style={styles.departmentSelect}
+                required
+              >
+                {departments.map((dept, index) => (
+                  <option key={index} value={index === 0 ? '' : dept}>
+                    {dept}
+                    {index !== 0 && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleRemoveDepartment(dept);
+                        }}
+                        style={styles.removeButton}
+                      >
+                        -
+                      </button>
+                    )}
+                  </option>
+                ))}
+              </select>
+              <button 
+                type="button" 
+                onClick={() => setShowAddDepartment(!showAddDepartment)}
+                style={styles.addDepartmentButton}
+              >
+                +
+              </button>
+            </div>
+            {showAddDepartment && (
+              <div style={styles.addDepartmentForm}>
+                <input
+                  type="text"
+                  value={newDepartment}
+                  onChange={(e) => setNewDepartment(e.target.value)}
+                  placeholder="Enter new department"
+                  style={styles.input}
+                />
+                <button 
+                  type="button"
+                  onClick={handleAddDepartment}
+                  style={styles.submitDepartmentButton}
+                >
+                  Add
+                </button>
+              </div>
+            )}
           </div>
+
           <div style={styles.formGroup}>
             <label style={styles.label}>Branch:</label>
-            <select
-              name="branch"
-              value={formData.branch}
-              onChange={handleChange}
-              style={styles.input}
-              required
-            >
-              {branches.map((branch, index) => (
-                <option key={index} value={index === 0 ? '' : branch}>
-                  {branch}
-                </option>
-              ))}
-            </select>
+            <div style={styles.departmentContainer}>
+              <select
+                name="branch"
+                value={formData.branch}
+                onChange={handleChange}
+                style={styles.input}
+                required
+              >
+                {branches.map((branch, index) => (
+                  <option key={index} value={branch.value}>
+                    {branch.label}
+                    {index !== 0 && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleRemoveBranch(branch);
+                        }}
+                        style={styles.removeButton}
+                      >
+                        -
+                      </button>
+                    )}
+                  </option>
+                ))}
+              </select>
+              <button 
+                type="button" 
+                onClick={() => setShowAddBranch(!showAddBranch)}
+                style={styles.addDepartmentButton}
+              >
+                +
+              </button>
+            </div>
+            {showAddBranch && (
+              <div style={styles.addBranchForm}>
+                <input
+                  type="text"
+                  value={newBranch.name}
+                  onChange={(e) => setNewBranch({ ...newBranch, name: e.target.value })}
+                  placeholder="Enter branch name"
+                  style={styles.input}
+                />
+                <input
+                  type="text"
+                  value={newBranch.code}
+                  onChange={(e) => setNewBranch({ ...newBranch, code: e.target.value })}
+                  placeholder="Enter branch code"
+                  style={styles.input}
+                />
+                <button 
+                  type="button"
+                  onClick={handleAddBranch}
+                  style={styles.submitBranchButton}
+                >
+                  Add
+                </button>
+              </div>
+            )}
           </div>
           {renderInput('Purpose', 'purpose', 'text', formData, handleChange, false)}
           {renderInput('Telephone', 'telephone', 'tel', formData, handleChange)}
@@ -812,12 +1005,41 @@ function FirstTime() {
 
           <div style={styles.formGroup}>
             <label style={styles.label}>Take a Picture:</label>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handlePictureCapture}
-              style={styles.inputFile}
-            />
+            <button 
+              type="button"
+              onClick={handlePictureCapture}
+              style={{
+                ...styles.button,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                backgroundColor: '#4CAF50'
+              }}
+            >
+              <svg 
+                width="24" 
+                height="24" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="2"
+                strokeLinecap="round" 
+                strokeLinejoin="round"
+              >
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                <circle cx="12" cy="13" r="4" />
+              </svg>
+              Open Camera
+            </button>
+            {formData.picture && (
+              <div style={styles.previewContainer}>
+                <img 
+                  src={formData.picture} 
+                  alt="Captured" 
+                  style={styles.preview}
+                />
+              </div>
+            )}
           </div>
           {error && <div style={styles.error}>{error}</div>}
           <button type="submit" style={styles.submitButton} disabled={isLoading}>
