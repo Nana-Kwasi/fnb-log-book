@@ -221,3 +221,8 @@ function Welcome() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+export default Welcome;
