@@ -641,15 +641,13 @@
 // );
 
 
+
 import React, { useState } from 'react';
-import { getFirestore, doc, setDoc, collection, getDocs, query, where } from "firebase/firestore";
-import app from '../Config';
-import { v4 as uuidv4 } from 'uuid';
 import { useNavigate } from 'react-router-dom';
+import { v4 as uuidv4 } from 'uuid';
 
 function FirstTime() {
-  const db = getFirestore(app);
-  const navigate = useNavigate()
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
     reason: '',
@@ -721,46 +719,41 @@ function FirstTime() {
     e.preventDefault();
 
     if (!formData.picture) {
-        setError('Please take a picture before submitting.');
-        return;
+      setError('Please take a picture before submitting.');
+      return;
     }
 
     setIsLoading(true);
 
     try {
-        const querySnapshot = await getDocs(query(collection(db, "VisitorEntries"), where("telephone", "==", formData.telephone)));
+      const response = await fetch('http://localhost:5001/visitors', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          reason: formData.reason,
+          department: formData.department,
+          branch: formData.branch,
+          purpose: formData.purpose,
+          telephone: formData.telephone,
+          company: formData.company,
+          picture: formData.picture,
+          date: new Date().toISOString().split('T')[0],
+          timeIn: new Date().toTimeString().split(' ')[0],
+        }),
+      });
 
-        if (!querySnapshot.empty) {
-            setError('This Phone number has been used to check in before. Please click "Been Here Before" on the home page to log in with your number.');
-            setIsLoading(false);
-            return;
-        }
+      if (!response.ok) {
+        throw new Error('Failed to submit the form. Please try again later.');
+      }
 
-        const entryId = uuidv4();
-        const now = new Date();
-        const formattedDate = now.toISOString().split('T')[0];
-        const formattedTime = now.toTimeString().split(' ')[0];
-
-        const submissionData = {
-            name: formData.name,
-            reason: formData.reason,
-            department: formData.department,
-            branch: formData.branch,
-            purpose: formData.purpose,
-            telephone: formData.telephone,
-            company: formData.company,
-            date: formattedDate,
-            timeIn: formattedTime,
-            id: entryId,
-        };
-
-        await setDoc(doc(db, "VisitorEntries", entryId), submissionData);
-        alert('Thank you for Visiting First National Bank!');
-        navigate('/');
-        
+      alert('Thank you for Visiting First National Bank!');
+      navigate('/');
     } catch (error) {
-        console.error("Error submitting data to Firestore:", error);
-        setError('Failed to submit the form. Please try again later.');
+      console.error("Error submitting data to the server:", error);
+      setError(error.message);
     }
 
     setIsLoading(false);
@@ -849,6 +842,7 @@ const renderInput = (label, name, type, formData, handleChange, required = true)
     />
   </div>
 );
+
 
 const styles = {
   formContainer: {

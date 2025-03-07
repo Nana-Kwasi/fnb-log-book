@@ -1,16 +1,6 @@
-import React, { useState, useEffect } from 'react';
+  import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  getFirestore,
-  collection,
-  query,
-  where,
-  getDocs,
-  updateDoc,
-  doc,
-} from 'firebase/firestore';
-import app from '../Config';
-import "../dispatch.css"
+
 function Welcome() {
   const navigate = useNavigate();
   const [showPopup, setShowPopup] = useState(false);
@@ -22,10 +12,7 @@ function Welcome() {
   const [error, setError] = useState('');
   const [latestVisit, setLatestVisit] = useState(null);
 
-  const db = getFirestore(app);
-
   useEffect(() => {
-    // Check if the user has already agreed to the terms
     const agreementStatus = localStorage.getItem('hasAgreed');
     if (!agreementStatus) {
       setShowPopup(true);
@@ -35,8 +22,9 @@ function Welcome() {
   const handleAgree = () => {
     setIsAgreed(true);
     setShowPopup(false);
-    localStorage.setItem('hasAgreed', 'true'); // Store the agreement status in localStorage
+    localStorage.setItem('hasAgreed', 'true');
   };
+
   const handleLogoutVerification = async () => {
     if (!logoutPhoneNumber.match(/^\d+$/)) {
       setError('Please enter a valid phone number.');
@@ -47,33 +35,25 @@ function Welcome() {
     setLoading(true);
 
     try {
-      const q = query(
-        collection(db, 'VisitorEntries'),
-        where('telephone', '==', logoutPhoneNumber)
-      );
-      const querySnapshot = await getDocs(q);
+      const response = await fetch(`http://localhost:5001/visitors/by-phone?telephone=${logoutPhoneNumber}`);
+      const data = await response.json();
 
-      if (!querySnapshot.empty) {
-        const visits = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
-        
-        const sortedVisits = visits.sort((a, b) => {
+      if (data.length === 0) {
+        setError('No visits found for this phone number.');
+      } else {
+        const sortedVisits = data.sort((a, b) => {
           const dateA = new Date(`${a.date} ${a.timeIn}`);
           const dateB = new Date(`${b.date} ${b.timeIn}`);
           return dateB - dateA;
         });
 
         const latest = sortedVisits[0];
-        
+
         if (latest.timeOut) {
           setError('Your latest visit already has a time out logged.');
         } else {
           setLatestVisit(latest);
         }
-      } else {
-        setError('No visits found for this phone number.');
       }
     } catch (err) {
       setError('Error fetching visit information. Please try again.');
@@ -91,21 +71,34 @@ function Welcome() {
     setLoading(true);
 
     try {
-      const visitRef = doc(db, 'VisitorEntries', latestVisit.id);
-      await updateDoc(visitRef, { timeOut: selectedTimeOut });
-      
+      const response = await fetch(`http://localhost:5001/visitors/${latestVisit.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          timeOut: selectedTimeOut,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Error logging time out. Please try again.');
+      }
+
       setError('Time out logged successfully!');
       setShowLogoutModal(false);
       setLatestVisit(null);
       setSelectedTimeOut('');
       setLogoutPhoneNumber('');
     } catch (err) {
-      setError('Error logging time out. Please try again.');
+      console.error("Error logging time out:", err);
+      setError(err.message);
     }
+
     setLoading(false);
   };
 
-  return (
+  return ( 
     <div className="welcome-container">
       {showPopup && (
         <div className="popup-container">
@@ -165,7 +158,6 @@ function Welcome() {
         </>
       )}
 
-      {/* Logout Modal */}
       {showLogoutModal && (
         <div className="popup-container">
           <div className="popup">
