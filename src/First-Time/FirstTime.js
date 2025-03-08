@@ -701,28 +701,51 @@ function FirstTime() {
   };
 
   const handleAddDepartment = async () => {
-    if (newDepartment.trim() === '') return;
+    if (newDepartment.trim() === '') {
+      console.log('Department name is empty, not submitting');
+      return;
+    }
 
+    console.log('Adding new department:', newDepartment);
+    
     try {
-      // Updated endpoint to match your routes
-      const response = await fetch('http://localhost:5001/departments/create', {
+      const endpoint = 'http://localhost:5001/departments/create';
+      console.log('Sending POST request to:', endpoint);
+      
+      const requestBody = {
+        name: newDepartment.trim()
+      };
+      console.log('Request payload:', requestBody);
+      
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          name: newDepartment.trim()
-        }),
+        body: JSON.stringify(requestBody),
       });
-
+      
+      console.log('Department add response status:', response.status);
+      
       if (!response.ok) {
-        throw new Error('Failed to add department');
+        const errorText = await response.text();
+        console.error('Department add failed with status:', response.status);
+        console.error('Error response:', errorText);
+        throw new Error(`Failed to add department: ${response.status} ${errorText}`);
       }
 
       const addedDepartment = await response.json();
-      setDepartments(prev => [...prev, addedDepartment.name]);
+      console.log('Department added successfully:', addedDepartment);
+      
+      setDepartments(prev => {
+        const newDepts = [...prev, addedDepartment.name];
+        console.log('Updated department list:', newDepts);
+        return newDepts;
+      });
+      
       setNewDepartment('');
       setShowAddDepartment(false);
+      console.log('Department add UI reset');
     } catch (error) {
       console.error("Error adding department:", error);
       setError('Failed to add department. Please try again.');
@@ -730,29 +753,52 @@ function FirstTime() {
   };
 
   const handleAddBranch = async () => {
-    if (newBranch.name.trim() === '' || newBranch.code.trim() === '') return;
+    if (newBranch.name.trim() === '' || newBranch.code.trim() === '') {
+      console.log('Branch name or code is empty, not submitting');
+      return;
+    }
 
+    console.log('Adding new branch:', newBranch);
+    
     try {
-      // Updated endpoint to match your routes
-      const response = await fetch('http://localhost:5001/branches/create', {
+      const endpoint = 'http://localhost:5001/branches/create';
+      console.log('Sending POST request to:', endpoint);
+      
+      const requestBody = {
+        name: newBranch.name.trim(),
+        code: newBranch.code.trim()
+      };
+      console.log('Request payload:', requestBody);
+      
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          name: newBranch.name.trim(),
-          code: newBranch.code.trim()
-        }),
+        body: JSON.stringify(requestBody),
       });
-
+      
+      console.log('Branch add response status:', response.status);
+      
       if (!response.ok) {
-        throw new Error('Failed to add branch');
+        const errorText = await response.text();
+        console.error('Branch add failed with status:', response.status);
+        console.error('Error response:', errorText);
+        throw new Error(`Failed to add branch: ${response.status} ${errorText}`);
       }
 
       const addedBranch = await response.json();
-      setBranches(prev => [...prev, { label: addedBranch.name, value: addedBranch.code }]);
+      console.log('Branch added successfully:', addedBranch);
+      
+      setBranches(prev => {
+        const newBranches = [...prev, { label: addedBranch.name, value: addedBranch.code }];
+        console.log('Updated branch list:', newBranches);
+        return newBranches;
+      });
+      
       setNewBranch({ name: '', code: '' });
       setShowAddBranch(false);
+      console.log('Branch add UI reset');
     } catch (error) {
       console.error("Error adding branch:", error);
       setError('Failed to add branch. Please try again.');
