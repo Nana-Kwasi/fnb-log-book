@@ -675,7 +675,8 @@ function FirstTime() {
 
   const fetchDepartments = async () => {
     try {
-      const response = await fetch('http://localhost:5001/departments');
+      // Updated endpoint to match your routes
+      const response = await fetch('http://localhost:5001/departments/all');
       const data = await response.json();
       const departmentsList = data.map(dept => dept.name);
       setDepartments(['Select Department', ...departmentsList]);
@@ -686,7 +687,8 @@ function FirstTime() {
 
   const fetchBranches = async () => {
     try {
-      const response = await fetch('http://localhost:5001/branches');
+      // Updated endpoint to match your routes
+      const response = await fetch('http://localhost:5001/branches/all');
       const data = await response.json();
       const branchesList = data.map(branch => ({
         label: branch.name,
@@ -702,7 +704,8 @@ function FirstTime() {
     if (newDepartment.trim() === '') return;
 
     try {
-      const response = await fetch('http://localhost:5001/departments', {
+      // Updated endpoint to match your routes
+      const response = await fetch('http://localhost:5001/departments/create', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -730,7 +733,8 @@ function FirstTime() {
     if (newBranch.name.trim() === '' || newBranch.code.trim() === '') return;
 
     try {
-      const response = await fetch('http://localhost:5001/branches', {
+      // Updated endpoint to match your routes
+      const response = await fetch('http://localhost:5001/branches/create', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
