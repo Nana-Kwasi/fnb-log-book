@@ -640,6 +640,7 @@
 //   </div>
 // );
 
+
 import React, { useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { useNavigate } from 'react-router-dom';
@@ -675,8 +676,7 @@ function FirstTime() {
 
   const fetchDepartments = async () => {
     try {
-      // Updated endpoint to match your routes
-      const response = await fetch('http://localhost:5001/departments/all');
+      const response = await fetch('http://localhost:5001/departments');
       const data = await response.json();
       const departmentsList = data.map(dept => dept.name);
       setDepartments(['Select Department', ...departmentsList]);
@@ -687,8 +687,7 @@ function FirstTime() {
 
   const fetchBranches = async () => {
     try {
-      // Updated endpoint to match your routes
-      const response = await fetch('http://localhost:5001/branches/all');
+      const response = await fetch('http://localhost:5001/branches');
       const data = await response.json();
       const branchesList = data.map(branch => ({
         label: branch.name,
@@ -704,8 +703,7 @@ function FirstTime() {
     if (newDepartment.trim() === '') return;
 
     try {
-      // Updated endpoint to match your routes
-      const response = await fetch('http://localhost:5001/departments/create', {
+      const response = await fetch('http://localhost:5001/departments', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -733,8 +731,7 @@ function FirstTime() {
     if (newBranch.name.trim() === '' || newBranch.code.trim() === '') return;
 
     try {
-      // Updated endpoint to match your routes
-      const response = await fetch('http://localhost:5001/branches/create', {
+      const response = await fetch('http://localhost:5001/branches', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1067,6 +1064,7 @@ const renderInput = (label, name, type, formData, handleChange, required = true)
     />
   </div>
 );
+
 
 const styles = {
   formContainer: {
