@@ -1,5 +1,6 @@
-  import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import "../dispatch.css";
 
 function Welcome() {
   const navigate = useNavigate();
@@ -13,6 +14,7 @@ function Welcome() {
   const [latestVisit, setLatestVisit] = useState(null);
 
   useEffect(() => {
+    // Check if the user has already agreed to the terms
     const agreementStatus = localStorage.getItem('hasAgreed');
     if (!agreementStatus) {
       setShowPopup(true);
@@ -22,7 +24,7 @@ function Welcome() {
   const handleAgree = () => {
     setIsAgreed(true);
     setShowPopup(false);
-    localStorage.setItem('hasAgreed', 'true');
+    localStorage.setItem('hasAgreed', 'true'); // Store the agreement status in localStorage
   };
 
   const handleLogoutVerification = async () => {
@@ -41,21 +43,24 @@ function Welcome() {
       if (data.length === 0) {
         setError('No visits found for this phone number.');
       } else {
+        // Sort visits to find the most recent one
         const sortedVisits = data.sort((a, b) => {
-          const dateA = new Date(`${a.date} ${a.timeIn}`);
-          const dateB = new Date(`${b.date} ${b.timeIn}`);
+          const dateA = new Date(`${a.date} ${a.timein}`);
+          const dateB = new Date(`${b.date} ${b.timein}`);
           return dateB - dateA;
         });
 
         const latest = sortedVisits[0];
-
-        if (latest.timeOut) {
+        
+        // Check if the latest visit already has a timeout
+        if (latest.timeout) {
           setError('Your latest visit already has a time out logged.');
         } else {
           setLatestVisit(latest);
         }
       }
     } catch (err) {
+      console.error("Error fetching visit information:", err);
       setError('Error fetching visit information. Please try again.');
     }
     setLoading(false);
@@ -94,11 +99,10 @@ function Welcome() {
       console.error("Error logging time out:", err);
       setError(err.message);
     }
-
     setLoading(false);
   };
 
-  return ( 
+  return (
     <div className="welcome-container">
       {showPopup && (
         <div className="popup-container">
@@ -143,14 +147,14 @@ function Welcome() {
             <p className="welcome-description">
               Please select one of the options below to proceed:
             </p>
-            <div class="button-container">
-              <button onClick={() => navigate('/first-time')} class="button first-time-btn">
+            <div className="button-container">
+              <button onClick={() => navigate('/first-time')} className="button first-time-btn">
                 First Time?
               </button>
-              <button onClick={() => navigate('/been-here-before')} class="button been-here-btn">
+              <button onClick={() => navigate('/been-here-before')} className="button been-here-btn">
                 Been Here Before?
               </button>
-              <button onClick={() => setShowLogoutModal(true)} class="logout-button">
+              <button onClick={() => setShowLogoutModal(true)} className="logout-button">
                 Log Out
               </button>
             </div>
@@ -158,6 +162,7 @@ function Welcome() {
         </>
       )}
 
+      {/* Logout Modal */}
       {showLogoutModal && (
         <div className="popup-container">
           <div className="popup">
@@ -602,7 +607,6 @@ function Welcome() {
 }
 
 export default Welcome;
-
 
 
 

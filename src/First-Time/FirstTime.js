@@ -673,19 +673,23 @@ function FirstTime() {
     'Treasury'
   ];
 
-  const branches = [
-    'Select Branch',
-    'Main Branch',
-    'Downtown Branch',
-    'West End Branch',
-    'East Side Branch',
-    'North Branch',
-    'South Branch',
-    'Central Branch',
-    'Business District Branch',
-    'Industrial Area Branch',
-    'Suburban Branch'
-  ];
+ 
+  const [branches, setBranches] = useState([
+    { label: 'Select Branch', value: '' },
+    { label: 'ACCRA BRANCH', value: '330102' },
+    { label: 'MAKOLA BRANCH', value: '330111' },
+    { label: 'TEMA BRANCH (COMM', value: '330120' },
+    { label: 'AIRPORT BRANCH', value: '330119' },
+    { label: 'MARKET CIRCLE BRANCH TAKORADI', value: '330401' },
+    { label: 'ADUM BRANCH KUMASI', value: '330601' },
+    { label: 'WEST HILLS MALL', value: '330108' },
+    { label: 'JUNCTION SHOPPING CENTRE BRANCH', value: '330101' },
+    { label: 'TEMA BRANCH (COMM 11)', value: '330112' },
+    { label: 'ACHIMOTA MALL BRANCH', value: '330107' },
+    { label: 'ACCRA MALL BRANCH', value: '330106' },
+    { label: 'KEJETIA BRANCH', value: '330602' }
+  ]);
+
 
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -695,23 +699,53 @@ function FirstTime() {
     setFormData({ ...formData, [name]: value });
   };
 
-  const handlePictureCapture = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        setError('File size must be less than 5MB.');
+  
+  const handlePictureCapture = async () => {
+    try {
+      // Request camera access
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: 'environment' } // Use back camera if available
+      });
+      
+      // Create video and canvas elements
+      const video = document.createElement('video');
+      const canvas = document.createElement('canvas');
+      video.srcObject = stream;
+      
+      // Wait for video to be ready
+      await new Promise(resolve => video.addEventListener('loadedmetadata', resolve));
+      video.play();
+      
+      // Set canvas dimensions to match video
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      
+      // Capture frame from video
+      canvas.getContext('2d').drawImage(video, 0, 0);
+      
+      // Convert to base64
+      const picture = canvas.toDataURL('image/jpeg');
+      
+      // Check file size (base64 string is ~33% larger than binary)
+      const base64Size = picture.length * (3/4);
+      if (base64Size > 5 * 1024 * 1024) {
+        setError('Captured image is too large. Please try again.');
         return;
       }
-
-      if (!['image/jpeg', 'image/png'].includes(file.type)) {
-        setError('Only JPEG and PNG formats are supported.');
-        return;
+      
+      // Update form data with captured image
+      setFormData({ ...formData, picture });
+      
+      // Stop camera stream
+      stream.getTracks().forEach(track => track.stop());
+      
+    } catch (err) {
+      if (err.name === 'NotAllowedError') {
+        setError('Camera access denied. Please allow camera access to capture photos.');
+      } else {
+        setError('Failed to access camera. Please try again.');
       }
-
-      const reader = new FileReader();
-      reader.onloadend = () => setFormData({ ...formData, picture: reader.result });
-      reader.onerror = () => setError('Failed to process the image. Please try again.');
-      reader.readAsDataURL(file);
+      console.error('Camera error:', err);
     }
   };
 
@@ -790,35 +824,80 @@ function FirstTime() {
               ))}
             </select>
           </div>
+          
           <div style={styles.formGroup}>
             <label style={styles.label}>Branch:</label>
-            <select
-              name="branch"
-              value={formData.branch}
-              onChange={handleChange}
-              style={styles.input}
-              required
-            >
-              {branches.map((branch, index) => (
-                <option key={index} value={index === 0 ? '' : branch}>
-                  {branch}
-                </option>
-              ))}
-            </select>
-          </div>
+            <div style={styles.departmentContainer}>
+              <select
+                name="branch"
+                value={formData.branch}
+                onChange={handleChange}
+                style={styles.input}
+                required
+              >
+                {branches.map((branch, index) => (
+                  <option key={index} value={branch.value}>
+                    {branch.label}
+                    {index !== 0 && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          
+                        }}
+                        style={styles.removeButton}
+                      >
+                        -
+                      </button>
+                    )}
+                  </option>
+                ))}
+              </select>
+             
+            </div>
+          
+            </div>
           {renderInput('Purpose', 'purpose', 'text', formData, handleChange, false)}
           {renderInput('Telephone', 'telephone', 'tel', formData, handleChange)}
           {renderInput('Company', 'company', 'text', formData, handleChange)}
 
           <div style={styles.formGroup}>
-            <label style={styles.label}>Take a Picture:</label>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handlePictureCapture}
-              style={styles.inputFile}
-            />
-          </div>
+  <label style={styles.label}>Take a Picture:</label>
+  <button 
+    onClick={handlePictureCapture}
+    style={{
+      ...styles.button,
+      display: 'flex',
+      alignItems: 'center',
+      gap: '8px',
+      backgroundColor: '#4CAF50'
+    }}
+  >
+    <svg 
+      width="24" 
+      height="24" 
+      viewBox="0 0 24 24" 
+      fill="none" 
+      stroke="currentColor" 
+      strokeWidth="2"
+      strokeLinecap="round" 
+      strokeLinejoin="round"
+    >
+      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+      <circle cx="12" cy="13" r="4" />
+    </svg>
+    Open Camera
+  </button>
+  {formData.picture && (
+    <div style={styles.previewContainer}>
+      <img 
+        src={formData.picture} 
+        alt="Captured" 
+        style={styles.preview}
+      />
+    </div>
+  )}
+</div>
           {error && <div style={styles.error}>{error}</div>}
           <button type="submit" style={styles.submitButton} disabled={isLoading}>
             {isLoading ? "Submitting..." : "Submit"}
