@@ -657,6 +657,7 @@ function FirstTime() {
     telephone: '',
     company: '',
     picture: null,
+    branch:''
   });
 
   const departments = [
