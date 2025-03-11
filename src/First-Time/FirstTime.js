@@ -737,11 +737,30 @@ function FirstTime() {
       console.error('Camera error:', err);
     }
   };
-
   const validateTelephone = async () => {
+    if (!formData.telephone || formData.telephone.trim() === '') {
+      setError('Please enter a telephone number.');
+      return false;
+    }
+  
     try {
-      const response = await fetch(`http://localhost:5001/visitors/check-telephone/${formData.telephone}`);
+      // Log the request to help with debugging
+      console.log(`Checking telephone: ${formData.telephone}`);
+      
+      const response = await fetch(`http://localhost:5001/visitors/check-telephone/${formData.telephone}`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+        },
+      });
+  
+      if (!response.ok) {
+        throw new Error(`Server responded with status: ${response.status}`);
+      }
+  
       const data = await response.json();
+      console.log('Telephone check response:', data);
+      
       if (data.exists) {
         setError('Telephone number already registered.');
         return false;
@@ -749,24 +768,30 @@ function FirstTime() {
       return true;
     } catch (error) {
       console.error('Error validating telephone:', error);
-      setError('Failed to validate telephone number.');
+      setError(`Failed to validate telephone number: ${error.message}`);
       return false;
     }
   };
-
+  
+  // And modify the handleSubmit to ensure validation happens before submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+  
+    // Check required fields first
+    if (!formData.name || !formData.telephone || !formData.department || !formData.branch) {
+      setError('Please fill in all required fields.');
+      return;
+    }
+  
     const isValid = await validateTelephone();
     if (!isValid) return;
-
+  
     if (!formData.picture) {
       setError('Please take a picture before submitting.');
       return;
     }
-
+  
     setIsLoading(true);
-
     try {
       const response = await fetch('http://localhost:5001/visitors', {
         method: 'POST',

@@ -20,22 +20,45 @@ const getVisitorLogsByPhoneNumber = async (req, res) => {
     res.status(500).send('Server error');
   }
 };
-
-// New function to check if a telephone number exists
 const checkTelephoneExists = async (req, res) => {
   const { telephone } = req.params;
+  
+  // Basic validation
+  if (!telephone || telephone.trim() === '') {
+    return res.status(400).json({ 
+      error: 'Telephone number is required',
+      exists: false
+    });
+  }
+
   try {
-    const result = await pool.query('SELECT EXISTS(SELECT 1 FROM visitor_log WHERE telephone = $1)', [telephone]);
+    console.log(`Checking if telephone exists: ${telephone}`);
+    
+    // First check if the pool connection is working
+    const testQuery = await pool.query('SELECT NOW()');
+    console.log('Database connection successful');
+    
+    // Then perform the actual query
+    const result = await pool.query(
+      'SELECT EXISTS(SELECT 1 FROM visitor_log WHERE telephone = $1) as "exists"', 
+      [telephone]
+    );
+    
+    console.log('Query result:', result.rows[0]);
+    
     res.json({ 
       exists: result.rows[0].exists,
       message: result.rows[0].exists ? 'Telephone number already registered' : 'Telephone number is available'
     });
   } catch (err) {
     console.error('Error checking telephone:', err);
-    res.status(500).json({ error: 'Failed to check telephone number' });
+    res.status(500).json({ 
+      error: 'Failed to check telephone number', 
+      details: err.message,
+      exists: false
+    });
   }
 };
-
 const getVisitorLogById = async (req, res) => {
   const { id } = req.params;
   try {
