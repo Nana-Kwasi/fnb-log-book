@@ -69,13 +69,12 @@ const getVisitorLogById = async (req, res) => {
     res.status(500).send('Server error');
   }
 };
-
 const createVisitorLog = async (req, res) => {
-  const { date, timeIn, timeOut, department, company, picture, telephone, reason, purpose, name } = req.body;
+  const { date, timeIn, timeOut, department, company, picture, telephone, reason, purpose, name, branch } = req.body;
   try {
     const result = await pool.query(
-      'INSERT INTO visitor_log (date, timeIn, timeOut, department, company, picture, telephone, reason, purpose, name) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *',
-      [date, timeIn, timeOut, department, company, picture, telephone, reason, purpose, name]
+      'INSERT INTO visitor_log (date, timeIn, timeOut, department, company, picture, telephone, reason, purpose, name, branch) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *',
+      [date, timeIn, timeOut, department, company, picture, telephone, reason, purpose, name, branch]
     );
     res.json(result.rows[0]);
   } catch (err) {
@@ -83,7 +82,6 @@ const createVisitorLog = async (req, res) => {
     res.status(500).send('Server error');
   }
 };
-
 const updateVisitorLog = async (req, res) => {
   const { id } = req.params;
   const { timeOut } = req.body;
