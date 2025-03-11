@@ -1,15 +1,17 @@
 const express = require('express');
-const router = express.Router();
-const visitorsController = require('../controllers/visitorsLogsController');
+const cors = require('cors');
+const bodyParser = require('body-parser');
+const visitorsRouter = require('./route/visitors');
 
-// Add the new telephone check endpoint - this must come before the /:id route
-router.get('/check-telephone/:telephone', visitorsController.checkTelephoneExists);
+const app = express();
 
-// Existing routes
-router.get('/by-phone', visitorsController.getVisitorLogsByPhoneNumber);
-router.get('/:id', visitorsController.getVisitorLogById);
-router.post('/', visitorsController.createVisitorLog);
-router.put('/:id', visitorsController.updateVisitorLog);
-router.delete('/:id', visitorsController.deleteVisitorLog);
+app.use(cors());
+app.use(bodyParser.json({ limit: '10mb' })); 
+app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }));
 
-module.exports = router;
+app.use('/visitors', visitorsRouter);
+
+const PORT = 5001;
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
