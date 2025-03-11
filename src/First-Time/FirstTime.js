@@ -657,7 +657,7 @@ function FirstTime() {
     telephone: '',
     company: '',
     picture: null,
-    branch:''
+    branch: ''
   });
 
   const departments = [
@@ -674,7 +674,6 @@ function FirstTime() {
     'Treasury'
   ];
 
- 
   const [branches, setBranches] = useState([
     { label: 'Select Branch', value: '' },
     { label: 'ACCRA BRANCH', value: '330102' },
@@ -691,7 +690,6 @@ function FirstTime() {
     { label: 'KEJETIA BRANCH', value: '330602' }
   ]);
 
-
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -700,44 +698,34 @@ function FirstTime() {
     setFormData({ ...formData, [name]: value });
   };
 
-  
   const handlePictureCapture = async () => {
     try {
-      // Request camera access
       const stream = await navigator.mediaDevices.getUserMedia({ 
         video: { facingMode: 'environment' } // Use back camera if available
       });
       
-      // Create video and canvas elements
       const video = document.createElement('video');
       const canvas = document.createElement('canvas');
       video.srcObject = stream;
       
-      // Wait for video to be ready
       await new Promise(resolve => video.addEventListener('loadedmetadata', resolve));
       video.play();
       
-      // Set canvas dimensions to match video
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       
-      // Capture frame from video
       canvas.getContext('2d').drawImage(video, 0, 0);
       
-      // Convert to base64
       const picture = canvas.toDataURL('image/jpeg');
       
-      // Check file size (base64 string is ~33% larger than binary)
       const base64Size = picture.length * (3/4);
       if (base64Size > 5 * 1024 * 1024) {
         setError('Captured image is too large. Please try again.');
         return;
       }
       
-      // Update form data with captured image
       setFormData({ ...formData, picture });
       
-      // Stop camera stream
       stream.getTracks().forEach(track => track.stop());
       
     } catch (err) {
@@ -750,8 +738,27 @@ function FirstTime() {
     }
   };
 
+  const validateTelephone = async () => {
+    try {
+      const response = await fetch(`http://localhost:5001/visitors/check-telephone/${formData.telephone}`);
+      const data = await response.json();
+      if (data.exists) {
+        setError('Telephone number already registered.');
+        return false;
+      }
+      return true;
+    } catch (error) {
+      console.error('Error validating telephone:', error);
+      setError('Failed to validate telephone number.');
+      return false;
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    const isValid = await validateTelephone();
+    if (!isValid) return;
 
     if (!formData.picture) {
       setError('Please take a picture before submitting.');
@@ -793,7 +800,7 @@ function FirstTime() {
 
     setIsLoading(false);
   };
-
+  
   return (
     <div style={{ backgroundColor: '#0F384A' }}>
       <div style={styles.formContainer}>
@@ -1048,6 +1055,7 @@ const styles = {
 };
 
 export default FirstTime;
+
 
 
 
