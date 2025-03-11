@@ -658,6 +658,7 @@ function FirstTime() {
     company: '',
     picture: null,
    
+   
   });
 
   const departments = [
