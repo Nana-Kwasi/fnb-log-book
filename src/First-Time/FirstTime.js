@@ -875,37 +875,24 @@ const handleSubmit = async (e) => {
           </div>
           
           <div style={styles.formGroup}>
-            <label style={styles.label}>Branch:</label>
-            <div style={styles.departmentContainer}>
-              <select
-                name="branch"
-                value={formData.branch}
-                onChange={handleChange}
-                style={styles.input}
-                required
-              >
-                {branches.map((branch, index) => (
-                  <option key={index} value={branch.value}>
-                    {branch.label}
-                    {index !== 0 && (
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          
-                        }}
-                        style={styles.removeButton}
-                      >
-                        -
-                      </button>
-                    )}
-                  </option>
-                ))}
-              </select>
-             
-            </div>
-          
-            </div>
+  <label style={styles.label}>Branch:</label>
+  <div style={styles.departmentContainer}>
+    <select
+      name="branch"
+      value={formData.branch}
+      onChange={handleChange}
+      style={styles.input}
+      required
+    >
+      {branches.map((branch, index) => (
+        <option key={index} value={branch.value}>
+          {branch.value && `${branch.label} (${branch.value})`}
+          {!branch.value && branch.label}
+        </option>
+      ))}
+    </select>
+  </div>
+</div>
           {renderInput('Purpose', 'purpose', 'text', formData, handleChange, false)}
           {renderInput('Telephone', 'telephone', 'tel', formData, handleChange)}
           {renderInput('Company', 'company', 'text', formData, handleChange)}
