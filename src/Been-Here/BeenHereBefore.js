@@ -1,15 +1,4 @@
 import React, { useState } from 'react';
-import {
-  getFirestore,
-  collection,
-  query,
-  where,
-  getDocs,
-  addDoc,
-  updateDoc,
-  doc,
-} from 'firebase/firestore';
-import app from '../Config';
 
 const BeenHereBefore = () => {
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -21,8 +10,6 @@ const BeenHereBefore = () => {
   const [currentVisitId, setCurrentVisitId] = useState(null);
   const [timeOut, setTimeOut] = useState(''); // Time out value for manual input
 
-  const db = getFirestore(app);
-
   const handleLogin = async () => {
     if (!phoneNumber.match(/^\d+$/)) {
       setError('Please enter a valid phone number.');
@@ -33,19 +20,20 @@ const BeenHereBefore = () => {
     setLoading(true);
 
     try {
-      const q = query(
-        collection(db, 'VisitorEntries'),
-        where('telephone', '==', phoneNumber)
-      );
-      const querySnapshot = await getDocs(q);
+      // Use your backend API endpoint to fetch visitor data by phone number
+      const response = await fetch(`http://localhost:5001/visitors/by-phone?telephone=${phoneNumber}`);
+      const data = await response.json();
 
-      if (!querySnapshot.empty) {
-        const userDoc = querySnapshot.docs[0].data();
-        const visits = querySnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
+      if (data.length > 0) {
+        // Sort the visits to get the most recent one for user info
+        const sortedVisits = data.sort((a, b) => {
+          const dateA = new Date(`${a.date} ${a.timein}`);
+          const dateB = new Date(`${b.date} ${b.timein}`);
+          return dateB - dateA;
+        });
 
+        const userDoc = sortedVisits[0]; // Get the most recent visit for user info
+        
         setUserInfo(userDoc);
         setVisitData({
           telephone: userDoc.telephone || '',
@@ -53,10 +41,14 @@ const BeenHereBefore = () => {
           department: userDoc.department || '',
           purpose: userDoc.purpose || '',
           reason: userDoc.reason || '',
+          name: userDoc.name || '',
         });
-        setVisitHistory(visits);
+        setVisitHistory(sortedVisits);
+      } else {
+        setError('No records found for this phone number.');
       }
     } catch (err) {
+      console.error('Error fetching user information:', err);
       setError('Error fetching user information. Please try again.');
     }
     setLoading(false);
@@ -77,14 +69,29 @@ const BeenHereBefore = () => {
         date: new Date().toLocaleDateString(),
         timeIn: new Date().toLocaleTimeString(),
         timeOut: '',
+        // If there are other fields required by your API, add them here
       };
 
-      const docRef = await addDoc(collection(db, 'VisitorEntries'), newVisit);
+      // Use your backend API endpoint to create a new visitor entry
+      const response = await fetch('http://localhost:5001/visitors', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newVisit),
+      });
 
-      setVisitHistory([newVisit, ...visitHistory]);
-      setCurrentVisitId(docRef.id);
+      if (!response.ok) {
+        throw new Error('Failed to create new visit entry');
+      }
+
+      const result = await response.json();
+
+      setVisitHistory([{ ...newVisit, id: result.id }, ...visitHistory]);
+      setCurrentVisitId(result.id);
       setError('Check-in successful!');
     } catch (err) {
+      console.error('Error saving the new visit entry:', err);
       setError('Error saving the new visit entry. Please try again.');
     }
     setLoading(false);
@@ -100,10 +107,18 @@ const BeenHereBefore = () => {
     setLoading(true);
 
     try {
-      const visitRef = doc(db, 'VisitorEntries', currentVisitId);
+      // Use your backend API endpoint to update the visitor entry with time out
+      const response = await fetch(`http://localhost:5001/visitors/${currentVisitId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ timeOut }),
+      });
 
-      // Update the Firestore document with Time Out
-      await updateDoc(visitRef, { timeOut });
+      if (!response.ok) {
+        throw new Error('Failed to update time out');
+      }
 
       // Update the UI
       setVisitHistory((prevHistory) =>
@@ -115,6 +130,7 @@ const BeenHereBefore = () => {
       setError('Time out logged successfully!');
       setCurrentVisitId(null);
     } catch (err) {
+      console.error('Error logging time out:', err);
       setError('Error logging time out. Please try again.');
     }
     setLoading(false);
@@ -229,8 +245,8 @@ const BeenHereBefore = () => {
               {visitHistory.map((visit, index) => (
                 <tr key={index}>
                   <td>{visit.date}</td>
-                  <td>{visit.timeIn}</td>
-                  <td>{visit.timeOut || '---'}</td>
+                  <td>{visit.timein || visit.timeIn}</td>
+                  <td>{visit.timeout || visit.timeOut || '---'}</td>
                   <td>{visit.company}</td>
                   <td>{visit.department}</td>
                   <td>{visit.purpose}</td>
