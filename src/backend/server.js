@@ -5,18 +5,34 @@ const visitorsRouter = require('./route/visitors');
 
 const app = express();
 
-// More specific CORS configuration to ensure proper communication
-app.use(cors({
-  origin: 'http://localhost:3000', // Replace with your frontend URL
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Accept'],
-}));
+// CORS configuration
+app.use(cors());
 
-// Increased payload limits
+// Body parser middleware
 app.use(bodyParser.json({ limit: '10mb' })); 
 app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }));
 
-// Add basic error handling middleware
+// Debug middleware to log all requests
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+  next();
+});
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// Mount the visitors router
+app.use('/visitors', visitorsRouter);
+
+// Catch-all 404 handler
+app.use((req, res) => {
+  console.log(`Route not found: ${req.method} ${req.url}`);
+  res.status(404).json({ error: 'Route not found' });
+});
+
+// Error handler
 app.use((err, req, res, next) => {
   console.error('Server error:', err);
   res.status(500).json({
@@ -25,14 +41,9 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Add a test endpoint to verify server is working
-app.get('/health', (req, res) => {
-  res.json({ status: 'Server is healthy' });
-});
-
-app.use('/visitors', visitorsRouter);
-
 const PORT = 5001;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
+  console.log(`Health check available at: http://localhost:${PORT}/health`);
+  console.log(`Check telephone endpoint: http://localhost:${PORT}/visitors/check-telephone/:telephone`);
 });

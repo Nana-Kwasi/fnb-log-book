@@ -737,6 +737,7 @@ function FirstTime() {
       console.error('Camera error:', err);
     }
   };
+
   const validateTelephone = async () => {
     if (!formData.telephone || formData.telephone.trim() === '') {
       setError('Please enter a telephone number.');
@@ -744,18 +745,26 @@ function FirstTime() {
     }
   
     try {
-      // Log the request to help with debugging
-      console.log(`Checking telephone: ${formData.telephone}`);
+      // Log the request URL for debugging
+      const url = `http://localhost:5001/visitors/check-telephone/${encodeURIComponent(formData.telephone)}`;
+      console.log(`Making request to: ${url}`);
       
-      const response = await fetch(`http://localhost:5001/visitors/check-telephone/${formData.telephone}`, {
+      const response = await fetch(url, {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
         },
       });
   
+      // Log the response status
+      console.log(`Response status: ${response.status}`);
+  
       if (!response.ok) {
-        throw new Error(`Server responded with status: ${response.status}`);
+        if (response.status === 404) {
+          throw new Error(`Endpoint not found (404). Please check server routes.`);
+        } else {
+          throw new Error(`Server responded with status: ${response.status}`);
+        }
       }
   
       const data = await response.json();
