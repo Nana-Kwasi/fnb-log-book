@@ -657,7 +657,7 @@ function FirstTime() {
     telephone: '',
     company: '',
     picture: null,
-    branch: ''
+   
   });
 
   const departments = [
@@ -781,60 +781,67 @@ function FirstTime() {
       return false;
     }
   };
-  
-  // And modify the handleSubmit to ensure validation happens before submission
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-  
-    // Check required fields first
-    if (!formData.name || !formData.telephone || !formData.department || !formData.branch) {
-      setError('Please fill in all required fields.');
-      return;
-    }
-  
-    const isValid = await validateTelephone();
-    if (!isValid) return;
-  
-    if (!formData.picture) {
-      setError('Please take a picture before submitting.');
-      return;
-    }
-  
-    setIsLoading(true);
-    try {
-      const response = await fetch('http://localhost:5001/visitors', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: formData.name,
-          reason: formData.reason,
-          department: formData.department,
-          branch: formData.branch,
-          purpose: formData.purpose,
-          telephone: formData.telephone,
-          company: formData.company,
-          picture: formData.picture,
-          date: new Date().toISOString().split('T')[0],
-          timeIn: new Date().toTimeString().split(' ')[0],
-        }),
-      });
+  // Modify the handleSubmit function in FirstTime.jsx
+// Modify the handleSubmit function in FirstTime.jsx
 
-      if (!response.ok) {
-        throw new Error('Failed to submit the form. Please try again later.');
-      }
+const handleSubmit = async (e) => {
+  e.preventDefault();
 
-      alert('Thank you for Visiting First National Bank!');
-      navigate('/');
-    } catch (error) {
-      console.error("Error submitting data to the server:", error);
-      setError(error.message);
+  // Check required fields first
+  if (!formData.name || !formData.telephone || !formData.department || !formData.branch) {
+    setError('Please fill in all required fields.');
+    return;
+  }
+
+  const isValid = await validateTelephone();
+  if (!isValid) return;
+
+  if (!formData.picture) {
+    setError('Please take a picture before submitting.');
+    return;
+  }
+
+  // Find the selected branch object to get both code and name
+  const selectedBranch = branches.find(branch => branch.value === formData.branch);
+  const branchName = selectedBranch ? selectedBranch.label : '';
+
+  setIsLoading(true);
+  try {
+    const response = await fetch('http://localhost:5001/visitors', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        name: formData.name,
+        reason: formData.reason,
+        department: formData.department,
+        branch: formData.branch, // Branch code
+        branchName: branchName, // Branch name
+        purpose: formData.purpose,
+        telephone: formData.telephone,
+        company: formData.company,
+        picture: formData.picture,
+        date: new Date().toISOString().split('T')[0],
+        timeIn: new Date().toTimeString().split(' ')[0],
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to submit the form. Please try again later.');
     }
 
-    setIsLoading(false);
-  };
-  
+    alert('Thank you for Visiting First National Bank!');
+    navigate('/');
+  } catch (error) {
+    console.error("Error submitting data to the server:", error);
+    setError(error.message);
+  }
+
+  setIsLoading(false);
+};
+
+
   return (
     <div style={{ backgroundColor: '#0F384A' }}>
       <div style={styles.formContainer}>

@@ -70,11 +70,12 @@ const getVisitorLogById = async (req, res) => {
   }
 };
 const createVisitorLog = async (req, res) => {
-  const { date, timeIn, timeOut, department, company, picture, telephone, reason, purpose, name, branch } = req.body;
+  const { date, timeIn, timeOut, department, company, picture, telephone, reason, purpose, name, branch,branchName // New field
+  } = req.body;
   try {
     const result = await pool.query(
-      'INSERT INTO visitor_log (date, timeIn, timeOut, department, company, picture, telephone, reason, purpose, name, branch) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *',
-      [date, timeIn, timeOut, department, company, picture, telephone, reason, purpose, name, branch]
+      'INSERT INTO visitor_log (date, timeIn, timeOut, department, company, picture, telephone, reason, purpose, name, branch,branchName) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *',
+      [date, timeIn, timeOut, department, company, picture, telephone, reason, purpose, name, branch,branchName]
     );
     res.json(result.rows[0]);
   } catch (err) {
