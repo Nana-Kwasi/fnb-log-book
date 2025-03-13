@@ -53,11 +53,10 @@ const BeenHereBefore = () => {
     }
     setLoading(false);
   };
-
   const handleCheckIn = async () => {
     setError('');
     setLoading(true);
-
+  
     try {
       const newVisit = {
         name: visitData.name || userInfo.name || '',
@@ -68,10 +67,12 @@ const BeenHereBefore = () => {
         reason: visitData.reason || '',
         date: new Date().toLocaleDateString(),
         timeIn: new Date().toLocaleTimeString(),
-        timeOut: '',
-        // If there are other fields required by your API, add them here
+        timeOut: null,
+        picture: '', 
+        branch: '', 
+        branchName: '' 
       };
-
+  
       // Use your backend API endpoint to create a new visitor entry
       const response = await fetch('http://localhost:5001/visitors', {
         method: 'POST',
@@ -80,13 +81,13 @@ const BeenHereBefore = () => {
         },
         body: JSON.stringify(newVisit),
       });
-
+  
       if (!response.ok) {
         throw new Error('Failed to create new visit entry');
       }
-
+  
       const result = await response.json();
-
+  
       setVisitHistory([{ ...newVisit, id: result.id }, ...visitHistory]);
       setCurrentVisitId(result.id);
       setError('Check-in successful!');

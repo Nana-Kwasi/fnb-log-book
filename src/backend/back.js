@@ -23,7 +23,7 @@ const getVisitorLogsByPhoneNumber = async (req, res) => {
 const checkTelephoneExists = async (req, res) => {
   const { telephone } = req.params;
   
-  // Basic validation
+  
   if (!telephone || telephone.trim() === '') {
     return res.status(400).json({ 
       error: 'Telephone number is required',
@@ -34,11 +34,10 @@ const checkTelephoneExists = async (req, res) => {
   try {
     console.log(`Checking if telephone exists: ${telephone}`);
     
-    // First check if the pool connection is working
     const testQuery = await pool.query('SELECT NOW()');
     console.log('Database connection successful');
     
-    // Then perform the actual query
+   
     const result = await pool.query(
       'SELECT EXISTS(SELECT 1 FROM visitor_log WHERE telephone = $1) as "exists"', 
       [telephone]
@@ -116,5 +115,5 @@ module.exports = {
   createVisitorLog,
   updateVisitorLog,
   deleteVisitorLog,
-  checkTelephoneExists, // Export the new function
+  checkTelephoneExists, 
 };
