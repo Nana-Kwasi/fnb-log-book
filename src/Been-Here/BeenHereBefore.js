@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Navigate, useNavigate } from 'react-router-dom';
 
 const BeenHereBefore = () => {
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -9,7 +10,7 @@ const BeenHereBefore = () => {
   const [error, setError] = useState('');
   const [currentVisitId, setCurrentVisitId] = useState(null);
   const [timeOut, setTimeOut] = useState(''); // Time out value for manual input
-
+const navigate = useNavigate();
   const handleLogin = async () => {
     if (!phoneNumber.match(/^\d+$/)) {
       setError('Please enter a valid phone number.');
@@ -42,6 +43,8 @@ const BeenHereBefore = () => {
           purpose: userDoc.purpose || '',
           reason: userDoc.reason || '',
           name: userDoc.name || '',
+          branchname:userDoc.branchname|| '',
+          branch:userDoc.branch|| '',
         });
         setVisitHistory(sortedVisits);
       } else {
@@ -66,9 +69,11 @@ const BeenHereBefore = () => {
         department: visitData.department || '',
         purpose: visitData.purpose || '',
         reason: visitData.reason || '',
+        branchname:visitData.branchname|| '',
+        branch:visitData.branch|| '',
         date: new Date().toLocaleDateString(),
         timeIn: new Date().toLocaleTimeString(),
-        timeOut: '',
+       
         // If there are other fields required by your API, add them here
       };
 
@@ -90,6 +95,7 @@ const BeenHereBefore = () => {
       setVisitHistory([{ ...newVisit, id: result.id }, ...visitHistory]);
       setCurrentVisitId(result.id);
       setError('Check-in successful!');
+   
     } catch (err) {
       console.error('Error saving the new visit entry:', err);
       setError('Error saving the new visit entry. Please try again.');
@@ -97,44 +103,44 @@ const BeenHereBefore = () => {
     setLoading(false);
   };
 
-  const handleTimeOut = async () => {
-    if (!timeOut) {
-      setError('Please select a time-out.');
-      return;
-    }
+  // const handleTimeOut = async () => {
+  //   if (!timeOut) {
+  //     setError('Please select a time-out.');
+  //     return;
+  //   }
 
-    setError('');
-    setLoading(true);
+  //   setError('');
+  //   setLoading(true);
 
-    try {
-      // Use your backend API endpoint to update the visitor entry with time out
-      const response = await fetch(`http://localhost:5001/visitors/${currentVisitId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ timeOut }),
-      });
+  //   try {
+  //     // Use your backend API endpoint to update the visitor entry with time out
+  //     const response = await fetch(`http://localhost:5001/visitors/${currentVisitId}`, {
+  //       method: 'PUT',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //       },
+  //       body: JSON.stringify({ timeOut }),
+  //     });
 
-      if (!response.ok) {
-        throw new Error('Failed to update time out');
-      }
+  //     if (!response.ok) {
+  //       throw new Error('Failed to update time out');
+  //     }
 
-      // Update the UI
-      setVisitHistory((prevHistory) =>
-        prevHistory.map((visit) =>
-          visit.id === currentVisitId ? { ...visit, timeOut } : visit
-        )
-      );
+  //     // Update the UI
+  //     setVisitHistory((prevHistory) =>
+  //       prevHistory.map((visit) =>
+  //         visit.id === currentVisitId ? { ...visit, timeOut } : visit
+  //       )
+  //     );
 
-      setError('Time out logged successfully!');
-      setCurrentVisitId(null);
-    } catch (err) {
-      console.error('Error logging time out:', err);
-      setError('Error logging time out. Please try again.');
-    }
-    setLoading(false);
-  };
+  //     setError('Time out logged successfully!');
+  //     setCurrentVisitId(null);
+  //   } catch (err) {
+  //     console.error('Error logging time out:', err);
+  //     setError('Error logging time out. Please try again.');
+  //   }
+  //   setLoading(false);
+  // };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -174,7 +180,7 @@ const BeenHereBefore = () => {
         <div className="card form-card">
           <h2>Welcome back, {userInfo.name}!</h2>
           <div className="form-container">
-            {['telephone', 'company', 'department', 'purpose', 'reason'].map(
+            {['telephone', 'company', 'department', 'purpose', 'reason','branchname','branch'].map(
               (field) => (
                 <div className="form-group" key={field}>
                   <label>{field.charAt(0).toUpperCase() + field.slice(1)}</label>
@@ -201,30 +207,7 @@ const BeenHereBefore = () => {
         </div>
       )}
 
-      {currentVisitId && (
-        <div className="card form-card">
-          <h2>Please Log Your Time Out</h2>
-          <p className="warning">
-            Remember to log your time out before leaving the premises.
-          </p>
-          <div className="form-group">
-            <label className="checkin-button">Time Out</label>
-            <input
-              type="time"
-              value={timeOut}
-              onChange={(e) => setTimeOut(e.target.value)}
-              className="form-input"
-            />
-          </div>
-          <button
-            onClick={handleTimeOut}
-            className="checkin-button"
-            disabled={loading}
-          >
-            {loading ? <div className="spinner"></div> : 'Submit Time Out'}
-          </button>
-        </div>
-      )}
+     
 
       {visitHistory.length > 0 && (
         <div className="card history-card">
@@ -239,6 +222,7 @@ const BeenHereBefore = () => {
                 <th>Department</th>
                 <th>Purpose</th>
                 <th>Reason</th>
+                <th>Branch Name</th>
               </tr>
             </thead>
             <tbody>
@@ -251,6 +235,7 @@ const BeenHereBefore = () => {
                   <td>{visit.department}</td>
                   <td>{visit.purpose}</td>
                   <td>{visit.reason}</td>
+                  <td>{visit.branchname}</td>
                 </tr>
               ))}
             </tbody>

@@ -1,15 +1,18 @@
+
 const pool = require('../db');
 
 const getAllVisitorLogs = async (req, res) => {
   try {
+    console.log("Fetching all visitor logs");
     const result = await pool.query('SELECT * FROM visitor_log');
+    console.log(`Found ${result.rows.length} visitor logs`);
+    console.log("Sample data:", result.rows.slice(0, 2)); // Log first 2 entries
     res.json(result.rows);
   } catch (err) {
-    console.error(err);
+    console.error("Database query error:", err);
     res.status(500).send('Server error');
   }
 };
-
 const getVisitorLogsByPhoneNumber = async (req, res) => {
   const { telephone } = req.query;
   try {
@@ -74,7 +77,7 @@ const createVisitorLog = async (req, res) => {
   } = req.body;
   try {
     const result = await pool.query(
-      'INSERT INTO visitor_log (date, timeIn, timeOut, department, company, picture, telephone, reason, purpose, name, branch,branchName) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *',
+      'INSERT INTO visitor_log (date, timeIn, timeOut, department, company, picture, telephone, reason, purpose, name, branch,branchName) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11,$12) RETURNING *',
       [date, timeIn, timeOut, department, company, picture, telephone, reason, purpose, name, branch,branchName]
     );
     res.json(result.rows[0]);
