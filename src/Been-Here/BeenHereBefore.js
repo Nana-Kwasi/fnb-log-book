@@ -1,4 +1,252 @@
-import React, { useState } from 'react';
+// import React, { useState } from 'react';
+// import { Navigate, useNavigate } from 'react-router-dom';
+
+// const BeenHereBefore = () => {
+//   const [phoneNumber, setPhoneNumber] = useState('');
+//   const [loading, setLoading] = useState(false);
+//   const [userInfo, setUserInfo] = useState(null);
+//   const [visitData, setVisitData] = useState({});
+//   const [visitHistory, setVisitHistory] = useState([]);
+//   const [error, setError] = useState('');
+//   const [currentVisitId, setCurrentVisitId] = useState(null);
+//   const [timeOut, setTimeOut] = useState(''); // Time out value for manual input
+// const navigate = useNavigate();
+//   const handleLogin = async () => {
+//     if (!phoneNumber.match(/^\d+$/)) {
+//       setError('Please enter a valid phone number.');
+//       return;
+//     }
+
+//     setError('');
+//     setLoading(true);
+
+//     try {
+//       // Use your backend API endpoint to fetch visitor data by phone number
+//       const response = await fetch(`http://localhost:5001/visitors/by-phone?telephone=${phoneNumber}`);
+//       const data = await response.json();
+
+//       if (data.length > 0) {
+//         // Sort the visits to get the most recent one for user info
+//         const sortedVisits = data.sort((a, b) => {
+//           const dateA = new Date(`${a.date} ${a.timein}`);
+//           const dateB = new Date(`${b.date} ${b.timein}`);
+//           return dateB - dateA;
+//         });
+
+//         const userDoc = sortedVisits[0]; // Get the most recent visit for user info
+        
+//         setUserInfo(userDoc);
+//         setVisitData({
+//           telephone: userDoc.telephone || '',
+//           company: userDoc.company || '',
+//           department: userDoc.department || '',
+//           purpose: userDoc.purpose || '',
+//           reason: userDoc.reason || '',
+//           name: userDoc.name || '',
+//           branchname:userDoc.branchname|| '',
+//           branch:userDoc.branch|| '',
+//         });
+//         setVisitHistory(sortedVisits);
+//       } else {
+//         setError('No records found for this phone number.');
+//       }
+//     } catch (err) {
+//       console.error('Error fetching user information:', err);
+//       setError('Error fetching user information. Please try again.');
+//     }
+//     setLoading(false);
+//   };
+//   const handleCheckIn = async () => {
+//     setError('');
+//     setLoading(true);
+  
+//     try {
+//       const newVisit = {
+//         name: visitData.name || userInfo.name || '',
+//         telephone: visitData.telephone || userInfo.telephone || '',
+//         company: visitData.company || '',
+//         department: visitData.department || '',
+//         purpose: visitData.purpose || '',
+//         reason: visitData.reason || '',
+//         branchname:visitData.branchname|| '',
+//         branch:visitData.branch|| '',
+//         date: new Date().toLocaleDateString(),
+//         timeIn: new Date().toLocaleTimeString(),
+//         timeOut: null,
+//         picture: '', 
+//         branch: '', 
+//         branchName: '' 
+       
+//         // If there are other fields required by your API, add them here
+//       };
+  
+//       // Use your backend API endpoint to create a new visitor entry
+//       const response = await fetch('http://localhost:5001/visitors', {
+//         method: 'POST',
+//         headers: {
+//           'Content-Type': 'application/json',
+//         },
+//         body: JSON.stringify(newVisit),
+//       });
+  
+//       if (!response.ok) {
+//         throw new Error('Failed to create new visit entry');
+//       }
+  
+//       const result = await response.json();
+  
+//       setVisitHistory([{ ...newVisit, id: result.id }, ...visitHistory]);
+//       setCurrentVisitId(result.id);
+//       setError('Check-in successful!');
+   
+//     } catch (err) {
+//       console.error('Error saving the new visit entry:', err);
+//       setError('Error saving the new visit entry. Please try again.');
+//     }
+//     setLoading(false);
+//   };
+
+//   // const handleTimeOut = async () => {
+//   //   if (!timeOut) {
+//   //     setError('Please select a time-out.');
+//   //     return;
+//   //   }
+
+//   //   setError('');
+//   //   setLoading(true);
+
+//   //   try {
+//   //     // Use your backend API endpoint to update the visitor entry with time out
+//   //     const response = await fetch(`http://localhost:5001/visitors/${currentVisitId}`, {
+//   //       method: 'PUT',
+//   //       headers: {
+//   //         'Content-Type': 'application/json',
+//   //       },
+//   //       body: JSON.stringify({ timeOut }),
+//   //     });
+
+//   //     if (!response.ok) {
+//   //       throw new Error('Failed to update time out');
+//   //     }
+
+//   //     // Update the UI
+//   //     setVisitHistory((prevHistory) =>
+//   //       prevHistory.map((visit) =>
+//   //         visit.id === currentVisitId ? { ...visit, timeOut } : visit
+//   //       )
+//   //     );
+
+//   //     setError('Time out logged successfully!');
+//   //     setCurrentVisitId(null);
+//   //   } catch (err) {
+//   //     console.error('Error logging time out:', err);
+//   //     setError('Error logging time out. Please try again.');
+//   //   }
+//   //   setLoading(false);
+//   // };
+
+//   const handleInputChange = (e) => {
+//     const { name, value } = e.target;
+//     setVisitData((prevData) => ({ ...prevData, [name]: value }));
+//   };
+
+//   return (
+//     <div className="been-here-container">
+//       <div className="logo-container">
+//         <img src="/fnb back.png" alt="FNB Logo" className="logo" />
+//         <h2 className="logo-text">FNB (First National Bank)</h2>
+//       </div>
+
+//       <div className="form-container">
+//         <h1 className="form-title">Returning Visitor</h1>
+//         <p className="form-description">
+//           Please enter your phone number to verify your identity.
+//         </p>
+//         <input
+//           type="text"
+//           placeholder="Enter your phone number"
+//           value={phoneNumber}
+//           onChange={(e) => setPhoneNumber(e.target.value)}
+//           className="phone-input"
+//         />
+//         {error && <p className="error-message">{error}</p>}
+//         <button
+//           onClick={handleLogin}
+//           className="login-button"
+//           disabled={loading}
+//         >
+//           {loading ? <div className="spinner"></div> : 'Verify'}
+//         </button>
+//       </div>
+
+//       {userInfo && currentVisitId === null && (
+//         <div className="card form-card">
+//           <h2>Welcome back, {userInfo.name}!</h2>
+//           <div className="form-container">
+//             {['telephone', 'company', 'department', 'purpose', 'reason','branchname','branch'].map(
+//               (field) => (
+//                 <div className="form-group" key={field}>
+//                   <label>{field.charAt(0).toUpperCase() + field.slice(1)}</label>
+//                   <input
+//                     type="text"
+//                     name={field}
+//                     value={visitData[field] || ''}
+//                     onChange={handleInputChange}
+//                     placeholder={`Enter ${field}`}
+//                     className="form-input"
+//                   />
+//                 </div>
+//               )
+//             )}
+
+//             <button
+//               onClick={handleCheckIn}
+//               className="checkin-button"
+//               disabled={loading}
+//             >
+//               {loading ? <div className="spinner"></div> : 'Check In'}
+//             </button>
+//           </div>
+//         </div>
+//       )}
+
+     
+
+//       {visitHistory.length > 0 && (
+//         <div className="card history-card">
+//           <h2>Visit History</h2>
+//           <table className="history-table">
+//             <thead>
+//               <tr>
+//                 <th>Date</th>
+//                 <th>Time In</th>
+//                 <th>Time Out</th>
+//                 <th>Company</th>
+//                 <th>Department</th>
+//                 <th>Purpose</th>
+//                 <th>Reason</th>
+//                 <th>Branch Name</th>
+//               </tr>
+//             </thead>
+//             <tbody>
+//               {visitHistory.map((visit, index) => (
+//                 <tr key={index}>
+//                   <td>{visit.date}</td>
+//                   <td>{visit.timein || visit.timeIn}</td>
+//                   <td>{visit.timeout || visit.timeOut || '---'}</td>
+//                   <td>{visit.company}</td>
+//                   <td>{visit.department}</td>
+//                   <td>{visit.purpose}</td>
+//                   <td>{visit.reason}</td>
+//                   <td>{visit.branchname}</td>
+//                 </tr>
+//               ))}
+//             </tbody>
+//           </table>
+//         </div>
+//       )}
+import React, { useState, useEffect } from 'react';
+import { Navigate, useNavigate } from 'react-router-dom';
 
 const BeenHereBefore = () => {
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -9,6 +257,10 @@ const BeenHereBefore = () => {
   const [error, setError] = useState('');
   const [currentVisitId, setCurrentVisitId] = useState(null);
   const [timeOut, setTimeOut] = useState(''); // Time out value for manual input
+  const [pendingVisits, setPendingVisits] = useState({}); // Grouped by date
+  const [selectedVisit, setSelectedVisit] = useState(null);
+  const [mode, setMode] = useState('check-in'); // 'check-in' or 'check-out'
+  const navigate = useNavigate();
 
   const handleLogin = async () => {
     if (!phoneNumber.match(/^\d+$/)) {
@@ -42,8 +294,19 @@ const BeenHereBefore = () => {
           purpose: userDoc.purpose || '',
           reason: userDoc.reason || '',
           name: userDoc.name || '',
+          branchname: userDoc.branchname || '',
+          branch: userDoc.branch || '',
         });
         setVisitHistory(sortedVisits);
+        
+        // Group pending visits (without timeout) by date
+        const pending = groupPendingVisitsByDate(sortedVisits);
+        setPendingVisits(pending);
+        
+        // If there are pending visits, offer check-out option
+        if (Object.keys(pending).length > 0) {
+          setError('You have pending check-outs. Would you like to check in or check out?');
+        }
       } else {
         setError('No records found for this phone number.');
       }
@@ -53,6 +316,29 @@ const BeenHereBefore = () => {
     }
     setLoading(false);
   };
+
+  // Helper function to group pending visits by date
+  const groupPendingVisitsByDate = (visits) => {
+    const grouped = {};
+    
+    visits.forEach(visit => {
+      // Only include visits without timeout/timeOut
+      if (!visit.timeout && !visit.timeOut) {
+        if (!grouped[visit.date]) {
+          grouped[visit.date] = [];
+        }
+        grouped[visit.date].push(visit);
+      }
+    });
+    
+    // Sort dates in ascending order
+    return Object.fromEntries(
+      Object.entries(grouped).sort(([dateA], [dateB]) => {
+        return new Date(dateA) - new Date(dateB);
+      })
+    );
+  };
+
   const handleCheckIn = async () => {
     setError('');
     setLoading(true);
@@ -65,6 +351,8 @@ const BeenHereBefore = () => {
         department: visitData.department || '',
         purpose: visitData.purpose || '',
         reason: visitData.reason || '',
+        branchname: visitData.branchname || '',
+        branch: visitData.branch || '',
         date: new Date().toLocaleDateString(),
         timeIn: new Date().toLocaleTimeString(),
         timeOut: null,
@@ -91,6 +379,7 @@ const BeenHereBefore = () => {
       setVisitHistory([{ ...newVisit, id: result.id }, ...visitHistory]);
       setCurrentVisitId(result.id);
       setError('Check-in successful!');
+   
     } catch (err) {
       console.error('Error saving the new visit entry:', err);
       setError('Error saving the new visit entry. Please try again.');
@@ -98,9 +387,9 @@ const BeenHereBefore = () => {
     setLoading(false);
   };
 
-  const handleTimeOut = async () => {
-    if (!timeOut) {
-      setError('Please select a time-out.');
+  const handleCheckOut = async () => {
+    if (!selectedVisit) {
+      setError('Please select a visit to check out.');
       return;
     }
 
@@ -108,13 +397,19 @@ const BeenHereBefore = () => {
     setLoading(true);
 
     try {
+      const currentTime = new Date().toLocaleTimeString();
+      
       // Use your backend API endpoint to update the visitor entry with time out
-      const response = await fetch(`http://localhost:5001/visitors/${currentVisitId}`, {
+      const response = await fetch(`http://localhost:5001/visitors/${selectedVisit.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ timeOut }),
+        body: JSON.stringify({ 
+          timeOut: currentTime,
+          // Use appropriate field name based on your backend
+          timeout: currentTime 
+        }),
       });
 
       if (!response.ok) {
@@ -124,12 +419,26 @@ const BeenHereBefore = () => {
       // Update the UI
       setVisitHistory((prevHistory) =>
         prevHistory.map((visit) =>
-          visit.id === currentVisitId ? { ...visit, timeOut } : visit
+          visit.id === selectedVisit.id ? { ...visit, timeOut: currentTime, timeout: currentTime } : visit
         )
       );
 
-      setError('Time out logged successfully!');
-      setCurrentVisitId(null);
+      // Update pending visits
+      const updatedPendingVisits = { ...pendingVisits };
+      const dateKey = selectedVisit.date;
+      
+      updatedPendingVisits[dateKey] = updatedPendingVisits[dateKey].filter(
+        visit => visit.id !== selectedVisit.id
+      );
+      
+      // Remove the date if no more pending visits
+      if (updatedPendingVisits[dateKey].length === 0) {
+        delete updatedPendingVisits[dateKey];
+      }
+      
+      setPendingVisits(updatedPendingVisits);
+      setSelectedVisit(null);
+      setError('Check-out successful!');
     } catch (err) {
       console.error('Error logging time out:', err);
       setError('Error logging time out. Please try again.');
@@ -140,6 +449,15 @@ const BeenHereBefore = () => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setVisitData((prevData) => ({ ...prevData, [name]: value }));
+  };
+
+  const handleModeChange = (newMode) => {
+    setMode(newMode);
+    setError('');
+  };
+
+  const handleVisitSelect = (visit) => {
+    setSelectedVisit(visit);
   };
 
   return (
@@ -171,11 +489,28 @@ const BeenHereBefore = () => {
         </button>
       </div>
 
-      {userInfo && currentVisitId === null && (
+      {userInfo && Object.keys(pendingVisits).length > 0 && (
+        <div className="mode-selector">
+          <button 
+            className={`mode-button ${mode === 'check-in' ? 'active' : ''}`}
+            onClick={() => handleModeChange('check-in')}
+          >
+            Check In
+          </button>
+          <button 
+            className={`mode-button ${mode === 'check-out' ? 'active' : ''}`}
+            onClick={() => handleModeChange('check-out')}
+          >
+            Check Out
+          </button>
+        </div>
+      )}
+
+      {userInfo && mode === 'check-in' && currentVisitId === null && (
         <div className="card form-card">
           <h2>Welcome back, {userInfo.name}!</h2>
           <div className="form-container">
-            {['telephone', 'company', 'department', 'purpose', 'reason'].map(
+            {['telephone', 'company', 'department', 'purpose', 'reason', 'branchname', 'branch'].map(
               (field) => (
                 <div className="form-group" key={field}>
                   <label>{field.charAt(0).toUpperCase() + field.slice(1)}</label>
@@ -202,27 +537,37 @@ const BeenHereBefore = () => {
         </div>
       )}
 
-      {currentVisitId && (
-        <div className="card form-card">
-          <h2>Please Log Your Time Out</h2>
-          <p className="warning">
-            Remember to log your time out before leaving the premises.
-          </p>
-          <div className="form-group">
-            <label className="checkin-button">Time Out</label>
-            <input
-              type="time"
-              value={timeOut}
-              onChange={(e) => setTimeOut(e.target.value)}
-              className="form-input"
-            />
+      {userInfo && mode === 'check-out' && (
+        <div className="card checkout-card">
+          <h2>Select a Visit to Check Out</h2>
+          <div className="pending-visits-container">
+            {Object.entries(pendingVisits).map(([date, visits]) => (
+              <div key={date} className="date-group">
+                <h3>Date: {date}</h3>
+                <div className="visits-list">
+                  {visits.map((visit) => (
+                    <div 
+                      key={visit.id} 
+                      className={`visit-item ${selectedVisit && selectedVisit.id === visit.id ? 'selected' : ''}`}
+                      onClick={() => handleVisitSelect(visit)}
+                    >
+                      <p><strong>Time In:</strong> {visit.timein || visit.timeIn}</p>
+                      <p><strong>Company:</strong> {visit.company}</p>
+                      <p><strong>Department:</strong> {visit.department}</p>
+                      <p><strong>Purpose:</strong> {visit.purpose}</p>
+                      <p><strong>Branch:</strong> {visit.branchname}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
           <button
-            onClick={handleTimeOut}
-            className="checkin-button"
-            disabled={loading}
+            onClick={handleCheckOut}
+            className="checkout-button"
+            disabled={loading || !selectedVisit}
           >
-            {loading ? <div className="spinner"></div> : 'Submit Time Out'}
+            {loading ? <div className="spinner"></div> : 'Check Out Now'}
           </button>
         </div>
       )}
@@ -240,6 +585,7 @@ const BeenHereBefore = () => {
                 <th>Department</th>
                 <th>Purpose</th>
                 <th>Reason</th>
+                <th>Branch Name</th>
               </tr>
             </thead>
             <tbody>
@@ -252,13 +598,13 @@ const BeenHereBefore = () => {
                   <td>{visit.department}</td>
                   <td>{visit.purpose}</td>
                   <td>{visit.reason}</td>
+                  <td>{visit.branchname}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       )}
-
   <style>
   {`
     .been-here-container {
