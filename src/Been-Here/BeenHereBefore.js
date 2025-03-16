@@ -9,7 +9,9 @@ const BeenHereBefore = () => {
   const [visitHistory, setVisitHistory] = useState([]);
   const [error, setError] = useState('');
   const [currentVisitId, setCurrentVisitId] = useState(null);
-  const [timeOut, setTimeOut] = useState(''); // Time out value for manual input
+  const [timeOut, setTimeOut] = useState(''); 
+
+
 const navigate = useNavigate();
   const handleLogin = async () => {
     if (!phoneNumber.match(/^\d+$/)) {
@@ -21,19 +23,17 @@ const navigate = useNavigate();
     setLoading(true);
 
     try {
-      // Use your backend API endpoint to fetch visitor data by phone number
       const response = await fetch(`http://localhost:5001/visitors/by-phone?telephone=${phoneNumber}`);
       const data = await response.json();
 
       if (data.length > 0) {
-        // Sort the visits to get the most recent one for user info
         const sortedVisits = data.sort((a, b) => {
           const dateA = new Date(`${a.date} ${a.timein}`);
           const dateB = new Date(`${b.date} ${b.timein}`);
           return dateB - dateA;
         });
 
-        const userDoc = sortedVisits[0]; // Get the most recent visit for user info
+        const userDoc = sortedVisits[0]; 
         
         setUserInfo(userDoc);
         setVisitData({
@@ -43,7 +43,7 @@ const navigate = useNavigate();
           purpose: userDoc.purpose || '',
           reason: userDoc.reason || '',
           name: userDoc.name || '',
-          branchname:userDoc.branchname|| '',
+          branchName:userDoc.branchname|| '',
           branch:userDoc.branch|| '',
         });
         setVisitHistory(sortedVisits);
@@ -56,11 +56,10 @@ const navigate = useNavigate();
     }
     setLoading(false);
   };
-
   const handleCheckIn = async () => {
     setError('');
     setLoading(true);
-
+  
     try {
       const newVisit = {
         name: visitData.name || userInfo.name || '',
@@ -69,15 +68,11 @@ const navigate = useNavigate();
         department: visitData.department || '',
         purpose: visitData.purpose || '',
         reason: visitData.reason || '',
-        branchname:visitData.branchname|| '',
-        branch:visitData.branch|| '',
-        date: new Date().toLocaleDateString(),
+        branchName: visitData.branchName || userInfo.branchName || '',
+        branch: visitData.branch || '',
+        date: new Date().toISOString().split('T')[0], // Format date as YYYY-MM-DD
         timeIn: new Date().toLocaleTimeString(),
-       
-        // If there are other fields required by your API, add them here
       };
-
-      // Use your backend API endpoint to create a new visitor entry
       const response = await fetch('http://localhost:5001/visitors', {
         method: 'POST',
         headers: {
@@ -85,17 +80,16 @@ const navigate = useNavigate();
         },
         body: JSON.stringify(newVisit),
       });
-
+  
       if (!response.ok) {
         throw new Error('Failed to create new visit entry');
       }
-
+  
       const result = await response.json();
-
+  
       setVisitHistory([{ ...newVisit, id: result.id }, ...visitHistory]);
       setCurrentVisitId(result.id);
       setError('Check-in successful!');
-   
     } catch (err) {
       console.error('Error saving the new visit entry:', err);
       setError('Error saving the new visit entry. Please try again.');
@@ -180,7 +174,7 @@ const navigate = useNavigate();
         <div className="card form-card">
           <h2>Welcome back, {userInfo.name}!</h2>
           <div className="form-container">
-            {['telephone', 'company', 'department', 'purpose', 'reason','branchname','branch'].map(
+            {['telephone', 'company', 'department', 'purpose', 'reason','branchName','branch'].map(
               (field) => (
                 <div className="form-group" key={field}>
                   <label>{field.charAt(0).toUpperCase() + field.slice(1)}</label>
