@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import "../dispatch.css";
+import "../logout.css"
 
 function Welcome() {
   const navigate = useNavigate();
