@@ -641,8 +641,7 @@
 // );
 
 
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -657,46 +656,103 @@ function FirstTime() {
     telephone: '',
     company: '',
     picture: null,
-   
-   
   });
 
-  const departments = [
-    'Select Department',
-    'Human Resources',
-    'Finance',
-    'Information Technology',
-    'Operations',
-    'Marketing',
-    'Legal',
-    'Customer Service',
-    'Risk Management',
-    'Compliance',
-    'Treasury'
-  ];
+  // Load departments from localStorage or use default list
+  const [departments, setDepartments] = useState(() => {
+    const savedDepartments = localStorage.getItem('departments');
+    return savedDepartments ? JSON.parse(savedDepartments) : [
+      'Select Department',
+      'Human Resources',
+      'Finance',
+      'Information Technology',
+      'Operations',
+      'Marketing',
+      'Legal',
+      'Customer Service',
+      'Risk Management',
+      'Compliance',
+      'Treasury'
+    ];
+  });
 
-  const [branches, setBranches] = useState([
-    { label: 'Select Branch', value: '' },
-    { label: 'ACCRA BRANCH', value: '330102' },
-    { label: 'MAKOLA BRANCH', value: '330111' },
-    { label: 'TEMA BRANCH (COMM', value: '330120' },
-    { label: 'AIRPORT BRANCH', value: '330119' },
-    { label: 'MARKET CIRCLE BRANCH TAKORADI', value: '330401' },
-    { label: 'ADUM BRANCH KUMASI', value: '330601' },
-    { label: 'WEST HILLS MALL', value: '330108' },
-    { label: 'JUNCTION SHOPPING CENTRE BRANCH', value: '330101' },
-    { label: 'TEMA BRANCH (COMM 11)', value: '330112' },
-    { label: 'ACHIMOTA MALL BRANCH', value: '330107' },
-    { label: 'ACCRA MALL BRANCH', value: '330106' },
-    { label: 'KEJETIA BRANCH', value: '330602' }
-  ]);
+  // Load branches from localStorage or use default list
+  const [branches, setBranches] = useState(() => {
+    const savedBranches = localStorage.getItem('branches');
+    return savedBranches ? JSON.parse(savedBranches) : [
+      { label: 'Select Branch', value: '' },
+      { label: 'ACCRA BRANCH', value: '330102' },
+      { label: 'MAKOLA BRANCH', value: '330111' },
+      { label: 'TEMA BRANCH (COMM', value: '330120' },
+      { label: 'AIRPORT BRANCH', value: '330119' },
+      { label: 'MARKET CIRCLE BRANCH TAKORADI', value: '330401' },
+      { label: 'ADUM BRANCH KUMASI', value: '330601' },
+      { label: 'WEST HILLS MALL', value: '330108' },
+      { label: 'JUNCTION SHOPPING CENTRE BRANCH', value: '330101' },
+      { label: 'TEMA BRANCH (COMM 11)', value: '330112' },
+      { label: 'ACHIMOTA MALL BRANCH', value: '330107' },
+      { label: 'ACCRA MALL BRANCH', value: '330106' },
+      { label: 'KEJETIA BRANCH', value: '330602' }
+    ];
+  });
 
+  // New state for adding new department and branch
+  const [newDepartment, setNewDepartment] = useState('');
+  const [newBranch, setNewBranch] = useState({ label: '', value: '' });
+  const [showAddDepartment, setShowAddDepartment] = useState(false);
+  const [showAddBranch, setShowAddBranch] = useState(false);
+  
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  // Save to localStorage when departments or branches change
+  useEffect(() => {
+    localStorage.setItem('departments', JSON.stringify(departments));
+  }, [departments]);
+
+  useEffect(() => {
+    localStorage.setItem('branches', JSON.stringify(branches));
+  }, [branches]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
+  };
+
+  // Handle adding new department
+  const handleAddDepartment = () => {
+    if (!newDepartment.trim()) {
+      setError('Department name cannot be empty');
+      return;
+    }
+    
+    if (departments.includes(newDepartment)) {
+      setError('Department already exists');
+      return;
+    }
+    
+    setDepartments([...departments, newDepartment]);
+    setNewDepartment('');
+    setShowAddDepartment(false);
+    setError('');
+  };
+
+  // Handle adding new branch
+  const handleAddBranch = () => {
+    if (!newBranch.label.trim() || !newBranch.value.trim()) {
+      setError('Branch name and code cannot be empty');
+      return;
+    }
+    
+    if (branches.some(branch => branch.value === newBranch.value)) {
+      setError('Branch code already exists');
+      return;
+    }
+    
+    setBranches([...branches, newBranch]);
+    setNewBranch({ label: '', value: '' });
+    setShowAddBranch(false);
+    setError('');
   };
 
   const handlePictureCapture = async () => {
@@ -782,66 +838,63 @@ function FirstTime() {
       return false;
     }
   };
-  // Modify the handleSubmit function in FirstTime.jsx
-// Modify the handleSubmit function in FirstTime.jsx
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  // Check required fields first
-  if (!formData.name || !formData.telephone || !formData.department || !formData.branch) {
-    setError('Please fill in all required fields.');
-    return;
-  }
-
-  const isValid = await validateTelephone();
-  if (!isValid) return;
-
-  if (!formData.picture) {
-    setError('Please take a picture before submitting.');
-    return;
-  }
-
-  // Find the selected branch object to get both code and name
-  const selectedBranch = branches.find(branch => branch.value === formData.branch);
-  const branchName = selectedBranch ? selectedBranch.label : '';
-
-  setIsLoading(true);
-  try {
-    const response = await fetch('http://localhost:5001/visitors', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        name: formData.name,
-        reason: formData.reason,
-        department: formData.department,
-        branch: formData.branch, // Branch code
-        branchName: branchName, // Branch name
-        purpose: formData.purpose,
-        telephone: formData.telephone,
-        company: formData.company,
-        picture: formData.picture,
-        date: new Date().toISOString().split('T')[0],
-        timeIn: new Date().toTimeString().split(' ')[0],
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to submit the form. Please try again later.');
+    // Check required fields first
+    if (!formData.name || !formData.telephone || !formData.department || !formData.branch) {
+      setError('Please fill in all required fields.');
+      return;
     }
 
-    alert('Thank you for Visiting First National Bank!');
-    navigate('/');
-  } catch (error) {
-    console.error("Error submitting data to the server:", error);
-    setError(error.message);
-  }
+    const isValid = await validateTelephone();
+    if (!isValid) return;
 
-  setIsLoading(false);
-};
+    if (!formData.picture) {
+      setError('Please take a picture before submitting.');
+      return;
+    }
 
+    // Find the selected branch object to get both code and name
+    const selectedBranch = branches.find(branch => branch.value === formData.branch);
+    const branchName = selectedBranch ? selectedBranch.label : '';
+
+    setIsLoading(true);
+    try {
+      const response = await fetch('http://localhost:5001/visitors', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          reason: formData.reason,
+          department: formData.department,
+          branch: formData.branch, // Branch code
+          branchName: branchName, // Branch name
+          purpose: formData.purpose,
+          telephone: formData.telephone,
+          company: formData.company,
+          picture: formData.picture,
+          date: new Date().toISOString().split('T')[0],
+          timeIn: new Date().toTimeString().split(' ')[0],
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to submit the form. Please try again later.');
+      }
+
+      alert('Thank you for Visiting First National Bank!');
+      navigate('/');
+    } catch (error) {
+      console.error("Error submitting data to the server:", error);
+      setError(error.message);
+    }
+
+    setIsLoading(false);
+  };
 
   return (
     <div style={{ backgroundColor: '#0F384A' }}>
@@ -858,83 +911,150 @@ const handleSubmit = async (e) => {
         <form onSubmit={handleSubmit} style={styles.form}>
           {renderInput('Name', 'name', 'text', formData, handleChange)}
           {renderInput('Reason to See', 'reason', 'text', formData, handleChange, false)}
+          
           <div style={styles.formGroup}>
             <label style={styles.label}>Department:</label>
-            <select
-              name="department"
-              value={formData.department}
-              onChange={handleChange}
-              style={styles.input}
-              required
-            >
-              {departments.map((dept, index) => (
-                <option key={index} value={index === 0 ? '' : dept}>
-                  {dept}
-                </option>
-              ))}
-            </select>
+            <div style={styles.departmentContainer}>
+              <select
+                name="department"
+                value={formData.department}
+                onChange={handleChange}
+                style={{...styles.input, width: '80%'}}
+                required
+              >
+                {departments.map((dept, index) => (
+                  <option key={index} value={index === 0 ? '' : dept}>
+                    {dept}
+                  </option>
+                ))}
+              </select>
+              <button 
+                type="button" 
+                onClick={() => setShowAddDepartment(!showAddDepartment)}
+                style={styles.addButton}
+              >
+                {showAddDepartment ? 'Cancel' : 'Add New'}
+              </button>
+            </div>
+            
+            {showAddDepartment && (
+              <div style={styles.addNewContainer}>
+                <input
+                  type="text"
+                  value={newDepartment}
+                  onChange={(e) => setNewDepartment(e.target.value)}
+                  placeholder="Enter new department"
+                  style={styles.input}
+                />
+                <button 
+                  type="button" 
+                  onClick={handleAddDepartment}
+                  style={styles.saveButton}
+                >
+                  Save
+                </button>
+              </div>
+            )}
           </div>
           
           <div style={styles.formGroup}>
-  <label style={styles.label}>Branch:</label>
-  <div style={styles.departmentContainer}>
-    <select
-      name="branch"
-      value={formData.branch}
-      onChange={handleChange}
-      style={styles.input}
-      required
-    >
-      {branches.map((branch, index) => (
-        <option key={index} value={branch.value}>
-          {branch.value && `${branch.label} (${branch.value})`}
-          {!branch.value && branch.label}
-        </option>
-      ))}
-    </select>
-  </div>
-</div>
+            <label style={styles.label}>Branch:</label>
+            <div style={styles.departmentContainer}>
+              <select
+                name="branch"
+                value={formData.branch}
+                onChange={handleChange}
+                style={{...styles.input, width: '80%'}}
+                required
+              >
+                {branches.map((branch, index) => (
+                  <option key={index} value={branch.value}>
+                    {branch.value && `${branch.label} (${branch.value})`}
+                    {!branch.value && branch.label}
+                  </option>
+                ))}
+              </select>
+              <button 
+                type="button" 
+                onClick={() => setShowAddBranch(!showAddBranch)}
+                style={styles.addButton}
+              >
+                {showAddBranch ? 'Cancel' : 'Add New'}
+              </button>
+            </div>
+            
+            {showAddBranch && (
+              <div style={styles.addNewContainer}>
+                <div style={{display: 'flex', gap: '10px', marginBottom: '10px'}}>
+                  <input
+                    type="text"
+                    value={newBranch.label}
+                    onChange={(e) => setNewBranch({...newBranch, label: e.target.value})}
+                    placeholder="Enter branch name"
+                    style={{...styles.input, flex: '2'}}
+                  />
+                  <input
+                    type="text"
+                    value={newBranch.value}
+                    onChange={(e) => setNewBranch({...newBranch, value: e.target.value})}
+                    placeholder="Enter branch code"
+                    style={{...styles.input, flex: '1'}}
+                  />
+                </div>
+                <button 
+                  type="button" 
+                  onClick={handleAddBranch}
+                  style={styles.saveButton}
+                >
+                  Save
+                </button>
+              </div>
+            )}
+          </div>
+          
           {renderInput('Purpose', 'purpose', 'text', formData, handleChange, false)}
           {renderInput('Telephone', 'telephone', 'tel', formData, handleChange)}
           {renderInput('Company', 'company', 'text', formData, handleChange)}
 
           <div style={styles.formGroup}>
-  <label style={styles.label}>Take a Picture:</label>
-  <button 
-    onClick={handlePictureCapture}
-    style={{
-      ...styles.button,
-      display: 'flex',
-      alignItems: 'center',
-      gap: '8px',
-      backgroundColor: '#4CAF50'
-    }}
-  >
-    <svg 
-      width="24" 
-      height="24" 
-      viewBox="0 0 24 24" 
-      fill="none" 
-      stroke="currentColor" 
-      strokeWidth="2"
-      strokeLinecap="round" 
-      strokeLinejoin="round"
-    >
-      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-      <circle cx="12" cy="13" r="4" />
-    </svg>
-    Open Camera
-  </button>
-  {formData.picture && (
-    <div style={styles.previewContainer}>
-      <img 
-        src={formData.picture} 
-        alt="Captured" 
-        style={styles.preview}
-      />
-    </div>
-  )}
-</div>
+            <label style={styles.label}>Take a Picture:</label>
+            <button 
+              type="button"
+              onClick={handlePictureCapture}
+              style={{
+                ...styles.button,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                backgroundColor: '#4CAF50'
+              }}
+            >
+              <svg 
+                width="24" 
+                height="24" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="2"
+                strokeLinecap="round" 
+                strokeLinejoin="round"
+              >
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                <circle cx="12" cy="13" r="4" />
+              </svg>
+              Open Camera
+            </button>
+            {formData.picture && (
+              <div style={styles.previewContainer}>
+                <img 
+                  src={formData.picture} 
+                  alt="Captured" 
+                  style={styles.preview}
+                />
+              </div>
+            )}
+          </div>
+          
           {error && <div style={styles.error}>{error}</div>}
           <button type="submit" style={styles.submitButton} disabled={isLoading}>
             {isLoading ? "Submitting..." : "Submit"}
@@ -958,6 +1078,8 @@ const renderInput = (label, name, type, formData, handleChange, required = true)
     />
   </div>
 );
+
+
 
 
 const styles = {
