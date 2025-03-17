@@ -1,6 +1,6 @@
 {
   "name": "visitors-log-book",
-  "version": "0.4.8",
+  "version": "0.5.0",
   "private": true,
   "dependencies": {
     "@react-pdf/renderer": "^4.1.6",

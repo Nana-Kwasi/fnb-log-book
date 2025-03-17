@@ -11,7 +11,10 @@ function Welcome() {
   const [selectedTimeOut, setSelectedTimeOut] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [latestVisit, setLatestVisit] = useState(null);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [pendingVisits, setPendingVisits] = useState([]);
+  const [selectedVisit, setSelectedVisit] = useState(null);
+  const [visitsByDate, setVisitsByDate] = useState({});
 
   useEffect(() => {
     // Check if the user has already agreed to the terms
@@ -34,6 +37,7 @@ function Welcome() {
     }
 
     setError('');
+    setSuccessMessage('');
     setLoading(true);
 
     try {
@@ -43,20 +47,35 @@ function Welcome() {
       if (data.length === 0) {
         setError('No visits found for this phone number.');
       } else {
-        // Sort visits to find the most recent one
-        const sortedVisits = data.sort((a, b) => {
-          const dateA = new Date(`${a.date} ${a.timein}`);
-          const dateB = new Date(`${b.date} ${b.timein}`);
-          return dateB - dateA;
-        });
-
-        const latest = sortedVisits[0];
+        // Filter visits with no timeout
+        const pendingVisits = data.filter(visit => !visit.timeout);
         
-        // Check if the latest visit already has a timeout
-        if (latest.timeout) {
-          setError('Your latest visit already has a time out logged.');
+        if (pendingVisits.length === 0) {
+          setError('No pending visits found for this phone number.');
         } else {
-          setLatestVisit(latest);
+          // Group visits by date
+          const groupedVisits = {};
+          pendingVisits.forEach(visit => {
+            if (!groupedVisits[visit.date]) {
+              groupedVisits[visit.date] = [];
+            }
+            groupedVisits[visit.date].push(visit);
+          });
+          
+          // Sort dates in ascending order
+          const sortedDates = Object.keys(groupedVisits).sort((a, b) => {
+            return new Date(a) - new Date(b);
+          });
+          
+          // Create a new object with sorted dates
+          const sortedGroupedVisits = {};
+          sortedDates.forEach(date => {
+            sortedGroupedVisits[date] = groupedVisits[date];
+          });
+          
+          setVisitsByDate(sortedGroupedVisits);
+          setPendingVisits(pendingVisits);
+          setSuccessMessage(`Found ${pendingVisits.length} pending visit(s). Please select a date.`);
         }
       }
     } catch (err) {
@@ -66,17 +85,27 @@ function Welcome() {
     setLoading(false);
   };
 
+  const handleDateSelection = (date) => {
+    // For dates with multiple visits, select the first one
+    const visitsOnDate = visitsByDate[date];
+    if (visitsOnDate && visitsOnDate.length > 0) {
+      setSelectedVisit(visitsOnDate[0]);
+      setSuccessMessage(`Selected visit on ${date}. Please select a time out.`);
+    }
+  };
+
   const handleLogoutSubmit = async () => {
-    if (!selectedTimeOut || !latestVisit) {
-      setError('Please select a time out.');
+    if (!selectedTimeOut || !selectedVisit) {
+      setError('Please select a date and time out.');
       return;
     }
 
     setError('');
+    setSuccessMessage('');
     setLoading(true);
 
     try {
-      const response = await fetch(`http://localhost:5001/visitors/${latestVisit.id}`, {
+      const response = await fetch(`http://localhost:5001/visitors/${selectedVisit.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -90,16 +119,47 @@ function Welcome() {
         throw new Error('Error logging time out. Please try again.');
       }
 
-      setError('Time out logged successfully!');
-      setShowLogoutModal(false);
-      setLatestVisit(null);
+      setSuccessMessage('Time out logged successfully!');
+      
+      // Remove this visit from the pending visits
+      const updatedPendingVisits = pendingVisits.filter(visit => visit.id !== selectedVisit.id);
+      setPendingVisits(updatedPendingVisits);
+      
+      // Update the grouped visits
+      const updatedVisitsByDate = {...visitsByDate};
+      Object.keys(updatedVisitsByDate).forEach(date => {
+        updatedVisitsByDate[date] = updatedVisitsByDate[date].filter(visit => visit.id !== selectedVisit.id);
+        if (updatedVisitsByDate[date].length === 0) {
+          delete updatedVisitsByDate[date];
+        }
+      });
+      setVisitsByDate(updatedVisitsByDate);
+      
+      // Reset selection
+      setSelectedVisit(null);
       setSelectedTimeOut('');
-      setLogoutPhoneNumber('');
+      
+      // If no more pending visits, close the modal
+      if (updatedPendingVisits.length === 0) {
+        setTimeout(() => {
+          setShowLogoutModal(false);
+          setLogoutPhoneNumber('');
+        }, 2000);
+      }
     } catch (err) {
       console.error("Error logging time out:", err);
       setError(err.message);
     }
     setLoading(false);
+  };
+
+  const resetLogoutProcess = () => {
+    setSelectedVisit(null);
+    setSelectedTimeOut('');
+    setVisitsByDate({});
+    setPendingVisits([]);
+    setError('');
+    setSuccessMessage('');
   };
 
   return (
@@ -168,7 +228,7 @@ function Welcome() {
           <div className="popup">
             <h2 className="popup-title">Visitor Logout</h2>
             
-            {!latestVisit ? (
+            {Object.keys(visitsByDate).length === 0 ? (
               <>
                 <input
                   type="text"
@@ -187,32 +247,64 @@ function Welcome() {
               </>
             ) : (
               <>
-                <p className="popup-message">Select your time out:</p>
-                <input
-                  type="time"
-                  value={selectedTimeOut}
-                  onChange={(e) => setSelectedTimeOut(e.target.value)}
-                  className="modal-input"
-                />
+                <p className="popup-message">Select a date to log out from:</p>
+                <div className="date-selection">
+                  {Object.keys(visitsByDate).map(date => (
+                    <button
+                      key={date}
+                      onClick={() => handleDateSelection(date)}
+                      className={`date-button ${selectedVisit && selectedVisit.date === date ? 'selected' : ''}`}
+                    >
+                      {new Date(date).toLocaleDateString()}
+                      <span className="visit-count">({visitsByDate[date].length} visit{visitsByDate[date].length > 1 ? 's' : ''})</span>
+                    </button>
+                  ))}
+                </div>
+                
+                {selectedVisit && (
+                  <div className="time-selection">
+                    <p className="visit-details">
+                      Visit on {new Date(selectedVisit.date).toLocaleDateString()} at {selectedVisit.timein}
+                    </p>
+                    <input
+                      type="time"
+                      value={selectedTimeOut}
+                      onChange={(e) => setSelectedTimeOut(e.target.value)}
+                      className="modal-input"
+                      placeholder="Select time out"
+                    />
+                    <button
+                      onClick={handleLogoutSubmit}
+                      className="popup-button"
+                      disabled={loading || !selectedTimeOut}
+                    >
+                      {loading ? <div className="spinner"></div> : 'Submit Time Out'}
+                    </button>
+                  </div>
+                )}
+                
                 <button
-                  onClick={handleLogoutSubmit}
-                  className="popup-button"
-                  disabled={loading}
+                  onClick={resetLogoutProcess}
+                  className="reset-button"
                 >
-                  {loading ? <div className="spinner"></div> : 'Submit Time Out'}
+                  Back to Phone Number
                 </button>
               </>
             )}
             
             {error && <p className="error-message">{error}</p>}
+            {successMessage && <p className="success-message">{successMessage}</p>}
             
             <button
               onClick={() => {
                 setShowLogoutModal(false);
                 setError('');
-                setLatestVisit(null);
+                setSuccessMessage('');
+                setSelectedVisit(null);
                 setSelectedTimeOut('');
                 setLogoutPhoneNumber('');
+                setVisitsByDate({});
+                setPendingVisits([]);
               }}
               className="modal-close-button"
             >
