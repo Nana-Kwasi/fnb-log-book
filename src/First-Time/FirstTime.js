@@ -1080,6 +1080,8 @@
 // );
 
 
+
+//mm
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
@@ -1115,43 +1117,63 @@ function FirstTime() {
     ];
   });
 
-  // Load branches from localStorage or use default list
-  const [branches, setBranches] = useState(() => {
-    const savedBranches = localStorage.getItem('branches');
-    return savedBranches ? JSON.parse(savedBranches) : [
-      { label: 'Select Branch', value: '' },
-      { label: 'ACCRA BRANCH', value: '330102' },
-      { label: 'MAKOLA BRANCH', value: '330111' },
-      { label: 'TEMA BRANCH (COMM', value: '330120' },
-      { label: 'AIRPORT BRANCH', value: '330119' },
-      { label: 'MARKET CIRCLE BRANCH TAKORADI', value: '330401' },
-      { label: 'ADUM BRANCH KUMASI', value: '330601' },
-      { label: 'WEST HILLS MALL', value: '330108' },
-      { label: 'JUNCTION SHOPPING CENTRE BRANCH', value: '330101' },
-      { label: 'TEMA BRANCH (COMM 11)', value: '330112' },
-      { label: 'ACHIMOTA MALL BRANCH', value: '330107' },
-      { label: 'ACCRA MALL BRANCH', value: '330106' },
-      { label: 'KEJETIA BRANCH', value: '330602' }
-    ];
-  });
+  // Optimized branches state
+  const [branches, setBranches] = useState([]);
+  const [loadingBranches, setLoadingBranches] = useState(true);
+  const [branchError, setBranchError] = useState('');
 
-  // New state for adding new department and branch
+  // New state for adding new department
   const [newDepartment, setNewDepartment] = useState('');
-  const [newBranch, setNewBranch] = useState({ label: '', value: '' });
   const [showAddDepartment, setShowAddDepartment] = useState(false);
-  const [showAddBranch, setShowAddBranch] = useState(false);
   
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  // Save to localStorage when departments or branches change
+  // Optimized useEffect for fetching branches
+  useEffect(() => {
+    const fetchBranches = async () => {
+      setLoadingBranches(true);
+      setBranchError('');
+      
+      try {
+        const response = await fetch('http://localhost:5001/fnb_branches');
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        // Assuming your API returns an array of objects with branch_name and branch_code
+        const formattedBranches = [
+          { branch_name: 'Select Branch', branch_code: '' }, // Default option
+          ...data
+        ];
+        
+        setBranches(formattedBranches);
+        
+      } catch (error) {
+        console.error('Error fetching branches:', error);
+        setBranchError('Failed to load branches. Please try again.');
+        
+        // Fallback to default branches if API fails
+        setBranches([
+          { branch_name: 'Select Branch', branch_code: '' },
+          { branch_name: 'Main Branch', branch_code: 'MB001' },
+          { branch_name: 'Downtown Branch', branch_code: 'DB002' }
+        ]);
+      } finally {
+        setLoadingBranches(false);
+      }
+    };
+
+    fetchBranches();
+  }, []);
+
+  // Save to localStorage when departments change
   useEffect(() => {
     localStorage.setItem('departments', JSON.stringify(departments));
   }, [departments]);
-
-  useEffect(() => {
-    localStorage.setItem('branches', JSON.stringify(branches));
-  }, [branches]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -1173,24 +1195,6 @@ function FirstTime() {
     setDepartments([...departments, newDepartment]);
     setNewDepartment('');
     setShowAddDepartment(false);
-    setError('');
-  };
-
-  // Handle adding new branch
-  const handleAddBranch = () => {
-    if (!newBranch.label.trim() || !newBranch.value.trim()) {
-      setError('Branch name and code cannot be empty');
-      return;
-    }
-    
-    if (branches.some(branch => branch.value === newBranch.value)) {
-      setError('Branch code already exists');
-      return;
-    }
-    
-    setBranches([...branches, newBranch]);
-    setNewBranch({ label: '', value: '' });
-    setShowAddBranch(false);
     setError('');
   };
 
@@ -1296,8 +1300,12 @@ function FirstTime() {
     }
 
     // Find the selected branch object to get both code and name
-    const selectedBranch = branches.find(branch => branch.value === formData.branch);
-    const branchName = selectedBranch ? selectedBranch.label : '';
+    const selectedBranch = branches.find(branch => branch.branch_code === formData.branch);
+    
+    if (!selectedBranch) {
+      setError('Please select a valid branch.');
+      return;
+    }
 
     setIsLoading(true);
     try {
@@ -1310,8 +1318,8 @@ function FirstTime() {
           name: formData.name,
           reason: formData.reason,
           department: formData.department,
-          branch: formData.branch, // Branch code
-          branchName: branchName, // Branch name
+          branch: formData.branch, // This will be the branch_code
+          branchName: selectedBranch.branch_name, // This will be the branch_name
           purpose: formData.purpose,
           telephone: formData.telephone,
           company: formData.company,
@@ -1334,6 +1342,71 @@ function FirstTime() {
 
     setIsLoading(false);
   };
+
+  // Retry function for branch loading
+  const retryBranchLoading = async () => {
+    setLoadingBranches(true);
+    setBranchError('');
+    
+    try {
+      const response = await fetch('http://localhost:5001/fnb_branches');
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      const data = await response.json();
+      setBranches([{ branch_name: 'Select Branch', branch_code: '' }, ...data]);
+    } catch (error) {
+      setBranchError('Failed to load branches. Please try again.');
+    } finally {
+      setLoadingBranches(false);
+    }
+  };
+
+  // Render optimized branch field
+  const renderBranchField = () => (
+    <div style={styles.formGroup}>
+      <label style={styles.label}>Branch: *</label>
+      
+      {loadingBranches ? (
+        <div style={styles.loadingContainer}>
+          <span>Loading branches...</span>
+        </div>
+      ) : (
+        <>
+          <select
+            name="branch"
+            value={formData.branch}
+            onChange={handleChange}
+            style={{
+              ...styles.input,
+              backgroundColor: branchError ? '#ffebee' : styles.input.backgroundColor
+            }}
+            required
+          >
+            {branches.map((branch, index) => (
+              <option key={index} value={branch.branch_code}>
+                {branch.branch_code ? 
+                  `${branch.branch_name} (${branch.branch_code})` : 
+                  branch.branch_name
+                }
+              </option>
+            ))}
+          </select>
+          
+          {branchError && (
+            <div style={styles.fieldError}>
+              {branchError}
+              <button 
+                type="button" 
+                onClick={retryBranchLoading}
+                style={styles.retryButton}
+              >
+                Retry
+              </button>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
 
   return (
     <div style={{ backgroundColor: '#0F384A' }}>
@@ -1358,7 +1431,7 @@ function FirstTime() {
                 name="department"
                 value={formData.department}
                 onChange={handleChange}
-                style={{...styles.input, width: '80%'}}
+                style={{...styles.input, width: '95%'}}
                 required
               >
                 {departments.map((dept, index) => (
@@ -1367,16 +1440,16 @@ function FirstTime() {
                   </option>
                 ))}
               </select>
-              <button 
+              {/* <button 
                 type="button" 
                 onClick={() => setShowAddDepartment(!showAddDepartment)}
                 style={styles.addButton}
               >
-                {showAddDepartment ? 'Cancel' : 'Add New'}
-              </button>
+                {showAddDepartment ? 'Cancel' : '+'}
+              </button> */}
             </div>
             
-            {showAddDepartment && (
+            {/* {showAddDepartment && (
               <div style={styles.addNewContainer}>
                 <input
                   type="text"
@@ -1393,63 +1466,10 @@ function FirstTime() {
                   Save
                 </button>
               </div>
-            )}
+            )} */}
           </div>
           
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Branch:</label>
-            <div style={styles.departmentContainer}>
-              <select
-                name="branch"
-                value={formData.branch}
-                onChange={handleChange}
-                style={{...styles.input, width: '80%'}}
-                required
-              >
-                {branches.map((branch, index) => (
-                  <option key={index} value={branch.value}>
-                    {branch.value && `${branch.label} (${branch.value})`}
-                    {!branch.value && branch.label}
-                  </option>
-                ))}
-              </select>
-              <button 
-                type="button" 
-                onClick={() => setShowAddBranch(!showAddBranch)}
-                style={styles.addButton}
-              >
-                {showAddBranch ? 'Cancel' : 'Add New'}
-              </button>
-            </div>
-            
-            {showAddBranch && (
-              <div style={styles.addNewContainer}>
-                <div style={{display: 'flex', gap: '10px', marginBottom: '10px'}}>
-                  <input
-                    type="text"
-                    value={newBranch.label}
-                    onChange={(e) => setNewBranch({...newBranch, label: e.target.value})}
-                    placeholder="Enter branch name"
-                    style={{...styles.input, flex: '2'}}
-                  />
-                  <input
-                    type="text"
-                    value={newBranch.value}
-                    onChange={(e) => setNewBranch({...newBranch, value: e.target.value})}
-                    placeholder="Enter branch code"
-                    style={{...styles.input, flex: '1'}}
-                  />
-                </div>
-                <button 
-                  type="button" 
-                  onClick={handleAddBranch}
-                  style={styles.saveButton}
-                >
-                  Save
-                </button>
-              </div>
-            )}
-          </div>
+          {renderBranchField()}
           
           {renderInput('Purpose', 'purpose', 'text', formData, handleChange, false)}
           {renderInput('Telephone', 'telephone', 'tel', formData, handleChange)}
@@ -1517,6 +1537,7 @@ const renderInput = (label, name, type, formData, handleChange, required = true)
     />
   </div>
 );
+
 
 // Add additional styles for
 
