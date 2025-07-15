@@ -484,8 +484,8 @@
 //           </table>
 //         </div>
 //       )}
-import React, { useState } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const BeenHereBefore = () => {
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -494,63 +494,84 @@ const BeenHereBefore = () => {
   const [visitData, setVisitData] = useState({});
   const [visitHistory, setVisitHistory] = useState([]);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState(''); // New state for success message
+  const [success, setSuccess] = useState('');
   const [currentVisitId, setCurrentVisitId] = useState(null);
-  const [timeOut, setTimeOut] = useState(''); 
+  const [branchList, setBranchList] = useState([]);
 
   const navigate = useNavigate();
 
-   
-const handleLogin = async () => {
-  if (!phoneNumber.match(/^\d+$/)) {
-    setError('Please enter a valid phone number.');
-    return;
-  }
-
-  setError('');
-  setLoading(true);
-
-  try {
-    const response = await fetch(`http://localhost:5001/visitors/by-phone?telephone=${phoneNumber}`);
-    const data = await response.json();
-
-    if (data.length > 0) {
-      const sortedVisits = data.sort((a, b) => {
-        // Updated sorting logic to handle YYYY-MM-DD formatted dates
-        const dateA = new Date(`${a.date}T${a.timein || a.timeIn}`);
-        const dateB = new Date(`${b.date}T${b.timein || b.timeIn}`);
-        return dateB - dateA;
-      });
-
-      const userDoc = sortedVisits[0]; 
-      
-      setUserInfo(userDoc);
-      setVisitData({
-        telephone: userDoc.telephone || '',
-        company: userDoc.company || '',
-        department: userDoc.department || '',
-        purpose: userDoc.purpose || '',
-        reason: userDoc.reason || '',
-        name: userDoc.name || '',
-        branchName: userDoc.branchname || '',
-        branch: userDoc.branch || '',
-      });
-      setVisitHistory(sortedVisits);
-    } else {
-      setError('No records found for this phone number.');
+  // Fetch branches
+  useEffect(() => {
+    const fetchBranches = async () => {
+      try {
+        const res = await fetch('http://localhost:5001/fnb_branches');
+        const data = await res.json();
+  
+        // Normalize the field names to match what your frontend expects
+        const normalized = data.map(b => ({
+          branchName: b.branch_name,
+          branchCode: b.branch_code
+        }));
+  
+        setBranchList(normalized);
+      } catch (err) {
+        console.error('Error fetching branches:', err);
+      }
+    };
+  
+    fetchBranches();
+  }, []);
+  
+  const handleLogin = async () => {
+    if (!phoneNumber.match(/^\d+$/)) {
+      setError('Please enter a valid phone number.');
+      return;
     }
-  } catch (err) {
-    console.error('Error fetching user information:', err);
-    setError('Error fetching user information. Please try again.');
-  }
-  setLoading(false);
-};
+
+    setError('');
+    setLoading(true);
+
+    try {
+      const response = await fetch(`http://localhost:5001/visitors/by-phone?telephone=${phoneNumber}`);
+      const data = await response.json();
+
+      if (data.length > 0) {
+        const sortedVisits = data.sort((a, b) => {
+          const dateA = new Date(`${a.date}T${a.timein || a.timeIn}`);
+          const dateB = new Date(`${b.date}T${b.timein || b.timeIn}`);
+          return dateB - dateA;
+        });
+
+        const userDoc = sortedVisits[0];
+
+        setUserInfo(userDoc);
+        setVisitData({
+          telephone: userDoc.telephone || '',
+          company: userDoc.company || '',
+          department: userDoc.department || '',
+          purpose: userDoc.purpose || '',
+          reason: userDoc.reason || '',
+          name: userDoc.name || '',
+          branchName: userDoc.branchname || '',
+          branch: userDoc.branch || '',
+        });
+        setVisitHistory(sortedVisits);
+      } else {
+        setError('No records found for this phone number.');
+      }
+    } catch (err) {
+      console.error('Error fetching user information:', err);
+      setError('Error fetching user information. Please try again.');
+    }
+
+    setLoading(false);
+  };
 
   const handleCheckIn = async () => {
     setError('');
-    setSuccess(''); 
+    setSuccess('');
     setLoading(true);
-  
+
     try {
       const newVisit = {
         name: visitData.name || userInfo.name || '',
@@ -561,9 +582,10 @@ const handleLogin = async () => {
         reason: visitData.reason || '',
         branchName: visitData.branchName || userInfo.branchName || '',
         branch: visitData.branch || '',
-        date: new Date().toISOString().split('T')[0], 
+        date: new Date().toISOString().split('T')[0],
         timeIn: new Date().toLocaleTimeString(),
       };
+
       const response = await fetch('http://localhost:5001/visitors', {
         method: 'POST',
         headers: {
@@ -571,13 +593,12 @@ const handleLogin = async () => {
         },
         body: JSON.stringify(newVisit),
       });
-  
+
       if (!response.ok) {
         throw new Error('Failed to create new visit entry');
       }
-  
+
       const result = await response.json();
-  
       setVisitHistory([{ ...newVisit, id: result.id }, ...visitHistory]);
       setCurrentVisitId(result.id);
       setSuccess('Check-in successful!');
@@ -585,13 +606,32 @@ const handleLogin = async () => {
       console.error('Error saving the new visit entry:', err);
       setError('Error saving the new visit entry. Please try again.');
     }
+
     setLoading(false);
   };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setVisitData((prevData) => ({ ...prevData, [name]: value }));
+  
+    if (name === 'branchName') {
+      const selectedBranch = branchList.find(branch => branch.branchName === value);
+      setVisitData(prev => ({
+        ...prev,
+        branchName: value,
+        branch: selectedBranch ? selectedBranch.branchCode : '',
+      }));
+    } else if (name === 'branch') {
+      const selectedBranch = branchList.find(branch => branch.branchCode === value);
+      setVisitData(prev => ({
+        ...prev,
+        branch: value,
+        branchName: selectedBranch ? selectedBranch.branchName : '',
+      }));
+    } else {
+      setVisitData(prev => ({ ...prev, [name]: value }));
+    }
   };
+  
 
   return (
     <div className="been-here-container">
@@ -627,21 +667,55 @@ const handleLogin = async () => {
         <div className="card form-card">
           <h2>Welcome back, {userInfo.name}!</h2>
           <div className="form-container">
-            {['telephone', 'company', 'department', 'purpose', 'reason', 'branchName', 'branch'].map(
-              (field) => (
-                <div className="form-group" key={field}>
-                  <label>{field.charAt(0).toUpperCase() + field.slice(1)}</label>
-                  <input
-                    type="text"
-                    name={field}
-                    value={visitData[field] || ''}
-                    onChange={handleInputChange}
-                    placeholder={`Enter ${field}`}
-                    className="form-input"
-                  />
-                </div>
-              )
-            )}
+            {['telephone', 'company', 'department', 'purpose', 'reason'].map((field) => (
+              <div className="form-group" key={field}>
+                <label>{field.charAt(0).toUpperCase() + field.slice(1)}</label>
+                <input
+                  type="text"
+                  name={field}
+                  value={visitData[field] || ''}
+                  onChange={handleInputChange}
+                  placeholder={`Enter ${field}`}
+                  className="form-input"
+                />
+              </div>
+            ))}
+
+  {/* Branch Name Dropdown */}
+<div className="form-group">
+  <label>Branch Name</label>
+  <select
+    name="branchName"
+    value={visitData.branchName || ''}
+    onChange={handleInputChange}
+    className="form-input"
+  >
+    <option value="">-- Select Branch Name --</option>
+    {branchList.map((branch, idx) => (
+      <option key={idx} value={branch.branchName}>
+        {branch.branchName}
+      </option>
+    ))}
+  </select>
+</div>
+
+{/* Branch Code Dropdown */}
+<div className="form-group">
+  <label>Branch Code</label>
+  <select
+    name="branch"
+    value={visitData.branch || ''}
+    onChange={handleInputChange}
+    className="form-input"
+  >
+    <option value="">-- Select Branch Code --</option>
+    {branchList.map((branch, idx) => (
+      <option key={idx} value={branch.branchCode}>
+        {branch.branchCode}
+      </option>
+    ))}
+  </select>
+</div>
 
             <button
               onClick={handleCheckIn}
