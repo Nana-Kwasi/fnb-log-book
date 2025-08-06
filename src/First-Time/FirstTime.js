@@ -33,7 +33,6 @@
 //       } catch {
 //         console.error('Error parsing formData from localStorage');
 //       }
-//     }
 //   }, []);
 
 //   const handleChange = (e) => {
@@ -365,7 +364,6 @@
 //       } catch {
 //         console.error('Error parsing formData from localStorage');
 //       }
-//     }
 //   }, []);
 
 //   useEffect(() => {
@@ -1136,7 +1134,7 @@ function FirstTime() {
       setBranchError('');
       
       try {
-        const response = await fetch('http://localhost:5001/fnb_branches');
+        const response = await fetch('http://localhost:5001/visitorslog/fnb_branches');
         
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -1246,7 +1244,7 @@ function FirstTime() {
   
     try {
       // Log the request URL for debugging
-      const url = `http://localhost:5001/visitors/check-telephone/${encodeURIComponent(formData.telephone)}`;
+      const url = `http://localhost:5001/visitorslog/visitors/check-telephone/${encodeURIComponent(formData.telephone)}`;
       console.log(`Making request to: ${url}`);
       
       const response = await fetch(url, {
@@ -1309,7 +1307,7 @@ function FirstTime() {
 
     setIsLoading(true);
     try {
-      const response = await fetch('http://localhost:5001/visitors', {
+      const response = await fetch('http://localhost:5001/visitorslog/visitors', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1704,7 +1702,6 @@ export default FirstTime;
 //       } catch {
 //         console.error('Error parsing formData from localStorage');
 //       }
-//     }
 //   }, []);
 
 //   const handleChange = (e) => {

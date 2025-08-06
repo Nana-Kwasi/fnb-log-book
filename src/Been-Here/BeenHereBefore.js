@@ -500,11 +500,10 @@ const BeenHereBefore = () => {
 
   const navigate = useNavigate();
 
-  // Fetch branches
   useEffect(() => {
     const fetchBranches = async () => {
       try {
-        const res = await fetch('http://localhost:5001/fnb_branches');
+        const res = await fetch('http://localhost:5001/visitorslog/fnb_branches');
         const data = await res.json();
   
         // Normalize the field names to match what your frontend expects
@@ -532,7 +531,7 @@ const BeenHereBefore = () => {
     setLoading(true);
 
     try {
-      const response = await fetch(`http://localhost:5001/visitors/by-phone?telephone=${phoneNumber}`);
+      const response = await fetch(`http://localhost:5001/visitorslog/visitors/by-phone?telephone=${phoneNumber}`);
       const data = await response.json();
 
       if (data.length > 0) {
@@ -586,7 +585,7 @@ const BeenHereBefore = () => {
         timeIn: new Date().toLocaleTimeString(),
       };
 
-      const response = await fetch('http://localhost:5001/visitors', {
+      const response = await fetch('http://localhost:5001/visitorslog/visitors', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

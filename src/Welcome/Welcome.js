@@ -41,7 +41,7 @@ function Welcome() {
     setLoading(true);
 
     try {
-      const response = await fetch(`http://localhost:5001/visitors/by-phone?telephone=${logoutPhoneNumber}`);
+      const response = await fetch(`http://localhost:5001/visitorslog/visitors/by-phone?telephone=${logoutPhoneNumber}`);
       const data = await response.json();
 
       if (data.length === 0) {
@@ -105,7 +105,7 @@ function Welcome() {
     setLoading(true);
 
     try {
-      const response = await fetch(`http://localhost:5001/visitors/${selectedVisit.id}`, {
+      const response = await fetch(`http://localhost:5001/visitorslog/visitors/${selectedVisit.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
